@@ -1,0 +1,7 @@
+{{define "body"}}
+{{$b:=.Blog}}
+{{ range $a:=.Pages}}
+    <a href='{{$b.GetArticleId $a}}.html'><h1>{{$a.Title}}</h1></a>
+    {{$a.GetHTMLContent}}
+{{end}}
+{{end}}

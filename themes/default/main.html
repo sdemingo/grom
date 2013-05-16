@@ -1,0 +1,39 @@
+{{define "main"}}
+<html>
+<head>
+<title>{{.Blog.Info.Name}}</title>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Condensed" />
+<link href='http://fonts.googleapis.com/css?family=Oxygen' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="themes/default/default.css">
+</head>
+<body>
+
+<div id="header">
+<h1><a href='index.html'>{{.Blog.Info.Name}}</a></h1>
+<div class="subtitle">{{.Blog.Info.Subtitle}}</div>
+</div>
+
+<div id="static-links">
+<ul>
+<li><a href='archive.html'>Antiguos</a></li>
+{{ range $s:=.Blog.Statics}}
+    <a href='static-{{$s.Id}}.html'>{{$s.Title}}</a>
+{{end}}
+</ul>
+</div>
+
+<div id="content">
+
+{{template "body" .}}
+
+</div>
+
+<div id="footer">
+<hr>
+<p>Sitio generado por <a href='http://bitbucket.org/sdemingo'>Grom</a>. Versión Beta.
+</div>
+
+</body>
+</html>
+{{end}}

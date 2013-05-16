@@ -1,0 +1,52 @@
+
+*) What is Grom?
+
+Grom is small static web content generator based on org-mode
+syntax. The Org-mode is a major mode for Emacs created by Carsten
+Dominik. Grom only support a subset of org-mode syntax. With Grom you
+can create all contents for your website or your blog with this syntax
+and Grom export it to HTML and build the site. You can get a short
+review about org-mode syntax at http://orgmode.org/orgguide.pdf
+
+Grom is written in Go and if you want build the binary you need to
+have the Go environment. You can download it from http://golang.org
+
+
+*) Quick start
+
+You can create your first blog site with Grom building the sample site
+which is included in the distribution. 
+
+      $ grom build-blog sample-blog
+
+Now, open sample/index.html in your favourite browse. You can edit the
+org files in post/ directory or static/ directory. In the img/
+directory you must put all images that you want to show in your posts
+and pages. Don't worry about the images size, just link it. Grom
+resize all of them and make the thumbs files.
+
+
+
+
+*) Create a new site
+
+You can create a new site writting the next command.
+
+    grom create-blog <grom-dir> <site-dir>
+
+Where <grom-dir> is the directory where grom was installed and
+<site-dir> is the directory of the new blog.
+
+Now you can add a new post or a new static page using: 
+    
+    grom add-post <site-dir> <post-name>	   
+    grom add-static <site-dir> <static-page-name>	
+
+To edit your new files you have open your text editor and load your
+file from <site-dir>/posts or <site-dir>/static.
+
+Finally, to build all the blog just type:
+
+    grom build-blog <site-dir>
+
+

@@ -1,0 +1,31 @@
+* Your first post
+:PROPERTIES:
+:Id: your-first-post
+:Author: Grom
+:Date: <2013-05-16 Thu>
+:END:
+
+
+Grom detect a subset of org-mode syntax.
+
+** This is a subheading
+ 
+This is a numbered list: 
+1. Item
+2. Item
+3. Item
+
+This is a bullet list:
++ item
++ item
++ item  
+
+You can post images from the img/ directory using: 
+
+[[../img/emacs.jpg]] 
+
+And grom fixes the size to the template and creates a link to the real size
+image. You can [[http://golang.org][link an external resources]], too. By now, *you only can use jpeg
+files*, but /next versions of grom/ let add any image format to your blog. You
+_can contact me to report_ any bug or suggestion.
+
