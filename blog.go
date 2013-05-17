@@ -85,6 +85,7 @@ func CreateBlog(dir string,themes string)(*Blog,error){
 	b.Info["Owner"]="Grom"
 	b.Info["Subtitle"]="I wanna be Grom!!"
 	b.Info["Theme"]="default"
+	b.Info["Url"]="http://yourdomain.com"
 
 	b.Years=make([]bool,100)
 	b.Months=months
@@ -287,7 +288,12 @@ func (blog *Blog)Build()(error){
 	if err!=nil{
 		return err
 	}
-	
+
+	err=blog.makeSitemap()
+	if err!=nil{
+		return err
+	}
+
 	return nil
 }
 
@@ -497,7 +503,11 @@ func (blog *Blog)makeArchive()(error){
 
 
 func (blog *Blog)makeThumbs()(error){
-	fd,_:=os.Open(blog.Dir+"img")
+
+	fd,err:=os.Open(blog.Dir+"img")
+	if err!=nil{
+		return err
+	}
 	imgs,_:=fd.Readdirnames(-1)
 	for i:=range imgs{
 		if imgs[i]!="thumbs"{
@@ -541,3 +551,50 @@ func (blog *Blog)createThumb(file string)(error){
 }
 
 
+
+/*
+ Sitemap generator
+*/
+
+var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{{$b:=.}}
+{{ range $a:=.Posts}}
+  <url>
+      <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
+      <lastmod>{{$a.GetStringSitemapDate}}</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.8</priority>
+   </url>
+{{end}}
+{{ range $a:=.Statics}}
+  <url>
+      <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
+      <lastmod>{{$a.GetStringSitemapDate}}</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.8</priority>
+   </url>
+</urlset>
+{{end}}
+{{end}}
+`
+
+func (blog *Blog)makeSitemap()(error){
+	f,err:=os.Create(blog.Dir+"sitemap.xml")
+	if err!=nil{
+		return err
+	}
+
+	t:=template.New("sitemap")
+	_,err=t.Parse(sitemapTemplate)
+	if (err!=nil){
+		return err
+	}
+
+	err=t.ExecuteTemplate(f,"sitemap",blog)
+	if (err!=nil){
+		return err
+	}
+
+	return nil
+}
