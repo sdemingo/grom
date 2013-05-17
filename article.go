@@ -180,7 +180,7 @@ var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\
 var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
 var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s).+)^\\#\\+END_SRC\\n")
 var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
-var parReg = regexp.MustCompile("\\.\\s*\\n+")
+var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
 var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
 var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
 
@@ -215,7 +215,8 @@ func convertToHtml(content []byte)([]byte){
 	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
 	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
 	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
-	out=parReg.ReplaceAll(out,[]byte(".\n<p>"))
+	//out=parReg.ReplaceAll(out,[]byte(".\n<p>"))
+	out=parReg.ReplaceAll(out,[]byte("\n\n<p>$text"))
 	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
 
 
