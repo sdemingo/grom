@@ -93,6 +93,11 @@ func (a *Article) GetStringDate()(string){
 	return t.Format(htmlDateTemplate)
 }
 
+func (a *Article) GetStringSitemapDate()(string){
+	t,_:=orgDate2Time(a.meta["Date"])
+	return t.Format(orgDateTemplate)
+}
+
 func (a *Article) GetDate()(time.Time){
 	t,_:=orgDate2Time(a.meta["Date"])
 	return t
