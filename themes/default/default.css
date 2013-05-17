@@ -86,11 +86,15 @@
     padding-bottom: 5px; 
 }
 
-#footer a:link, a:visited { 
+
+#footer a:link{ 
     text-decoration: none; 
     color:black;
 }
-
+#footer a:visited{ 
+    text-decoration: none; 
+    color:black;
+}
 #footer a:hover { 
     color:grey;
 }
@@ -106,6 +110,8 @@ body{
 }
 
 
+
+
 #content{
     clear:both;
     width:600px;
@@ -118,18 +124,41 @@ body{
 }
 
 
-#content a:link, a:visited { 
+#content a:link{ 
     text-decoration: none; 
+    color:grey;
+}
+#content a:visited { 
+    text-decoration: none; 
+    color:grey;
+}
+#content a:hover { 
     color:black;
 }
 
-#content a:hover { 
+
+.article-title{
+  padding-bottom:20px;
+}
+.article-title h1{
+    color:black;
+    padding-top:60px;
+}
+
+.article-title a:link{ 
+    text-decoration: none; 
+    color:black;
+}
+.article-title a:visited{ 
+    text-decoration: none; 
+    color:black;
+}
+.article-title a:hover{ 
     color:grey;
 }
 
-#content h1{
-    padding-top:60px;
-}
+
+
 
 
 
