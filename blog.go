@@ -168,13 +168,19 @@ func LoadBlog(dir string)(*Blog){
 }
 
 
-func (blog *Blog) loadAllPosts(){
-	fd,_:=os.Open(blog.Dir+"post")
+func (blog *Blog) loadAllPosts()(error){
+	fd,err:=os.Open(blog.Dir+"post")
+	if err!=nil {
+		return err
+	}
 	posts,_:=fd.Readdirnames(-1)
 	blog.Posts=make ([]*Article,len(posts))
 	blog.Nposts=0
 	for i:=range posts{
 		a,_:=ParseArticle(blog.Dir+"post/"+posts[i])
+		if a==nil{
+			return errors.New("Error parsing "+posts[i])
+		}
 		if (a!=nil) && (strings.HasSuffix(posts[i],".org")) {
 			blog.Posts[i]=a
 			if a.Date.Year()>=2000 {
@@ -185,21 +191,31 @@ func (blog *Blog) loadAllPosts(){
 		
 	}
 	sort.Sort(ByDate{blog.Posts})
+
+	return err
 }
 
-func (blog *Blog) loadAllStatics(){
-	fd,_:=os.Open(blog.Dir+"static")
+func (blog *Blog) loadAllStatics()(error){
+	fd,err:=os.Open(blog.Dir+"static")
+	if err!=nil {
+		return err
+	}
 	statics,_:=fd.Readdirnames(-1)
 	blog.Statics=make ([]*Article,len(statics))
 	blog.Nstatics=0
 	for i:=range statics{
 		a,_:=ParseArticle(blog.Dir+"static/"+statics[i])
+		if a==nil{
+			return errors.New("Error parsing "+statics[i])
+		}
 		if (a!=nil) && (strings.HasSuffix(statics[i],".org")){
 			blog.Statics[i]=a
 			blog.Nstatics++
 		}
 		
 	}
+
+	return err
 }
 
 

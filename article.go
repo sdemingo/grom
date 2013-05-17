@@ -175,12 +175,12 @@ func getTitle(content []byte)(string){
 
 var head1Reg = regexp.MustCompile("(?m)^\\* (?P<head>.+)\\n")
 var head2Reg = regexp.MustCompile("(?m)^\\*\\* (?P<head>.+)\\n")
-var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[\\w|\\s]+)\\]\\]")
+var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[^\\]]+)\\]\\]")
 var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\[file:\\.\\./img/(?P<thumb>[^\\]]+)\\]\\]")
 var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
 var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s).+)^\\#\\+END_SRC\\n")
 var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
-var parReg = regexp.MustCompile("(?P<text>\\w+[[:punct:]])\\n\\n")
+var parReg = regexp.MustCompile("\\.\\s*\\n+")
 var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
 var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
 
@@ -215,11 +215,12 @@ func convertToHtml(content []byte)([]byte){
 	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
 	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
 	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
-	out=parReg.ReplaceAll(out,[]byte("$text\n<p>"))
+	out=parReg.ReplaceAll(out,[]byte(".\n<p>"))
 	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
 
 
 	// font styles
+
 	out=italicReg.ReplaceAll(out,[]byte("$prefix<i>$text</i>$suffix"))
 	out=boldReg.ReplaceAll(out,[]byte("$prefix<b>$text</b>$suffix"))
 	out=ulineReg.ReplaceAll(out,[]byte("$prefix<u>$text</u>$suffix"))
