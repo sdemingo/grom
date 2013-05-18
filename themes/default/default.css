@@ -174,11 +174,15 @@ blockquote{
     padding-left: 25px;
 }
 
-
 pre {
-  font-family: "Courier New", Courier, monospace;
-  position:relative;
-  margin-left:20px;
+    position:relative;
+    padding: 20px;
+    margin-left:25px;
+    width:500px;
+
+    border: 1px double #ccc;
+    background-color:#F8F8F8;
+    font-family: "Courier New", Courier, monospace;
 }
 
 
@@ -199,6 +203,7 @@ img{
     padding:3px;
     border: 1px solid #ccc;
 }
+
 
 
 .small{
