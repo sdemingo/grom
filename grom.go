@@ -107,9 +107,9 @@ func create_static(args []string){
 
 
 func create_blog(args []string){
-	var t string
+
 	if (len(args)<3){
-		fmt.Printf("grom create-blog <grom-dir> <new-blog-dir>\n",t)
+		fmt.Printf("grom create-blog <grom-dir> <new-blog-dir>\n")
 		return
 	}
 
