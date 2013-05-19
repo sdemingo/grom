@@ -33,28 +33,38 @@ type Article struct{
 	Id string
 	Title string
 	Date time.Time
+	DateFormat map[string]string
 	Content []byte
 	Meta map[string]string
 
 }
 
 
-var orgDateTemplate = "2006-01-02"
-var htmlDateTemplate = "Mon, 02 Jan 2006"
 var checkID = regexp.MustCompile("[^(\\w|\\.)]")
 
 
+const(
+	RSSDateFormat  = "Mon, 02 Jan 2006 15:04:05 GMT"
+	AtomDateFormat = time.RFC3339
+	OrgDateFormat  = "2006-01-02"
+	PostDateFormat = "Mon, 02 Jan 2006"
+	
+)
 
 func NewArticle(id string)(*Article,error){
 	a:=new(Article)
 	a.Date=time.Now()
+	a.DateFormat=make(map[string]string)
+	a.DateFormat["PostDateFormat"]=a.GetDateString(PostDateFormat)
+	a.DateFormat["SitemapDateFormat"]=a.GetDateString(OrgDateFormat)
+	a.DateFormat["RSSDateFormat"]=a.GetDateString(RSSDateFormat)
 
 	a.Id=checkID.ReplaceAllString(id,"-")
 
 
 	a.Meta=make(map[string]string)
 	a.Meta["Id"]=a.Id
-	a.Meta["Date"]=time2OrgDate(a.Date)
+	a.Meta["Date"]=date2String(a.Date)
 	a.Meta["Author"]="Sergio de Mingo"
 
 	return a,nil
@@ -69,16 +79,22 @@ func ParseArticle(ifile string)(*Article,error){
 	}
 
 	a.Content=b
-	a.Title=getTitle(a.Content)
+	a.Title=parseTitle(a.Content)
 	a.Meta=make(map[string]string)
-	a.Meta["Id"]=getProperty(a.Content,"Id")
-	a.Meta["Date"]=getProperty(a.Content,"Date")
-	a.Meta["Author"]=getProperty(a.Content,"Author")
-	a.Date,err=orgDate2Time(a.Meta["Date"])
+	a.Meta["Id"]=parseProperty(a.Content,"Id")
+	a.Meta["Date"]=parseProperty(a.Content,"Date")
+	a.Meta["Author"]=parseProperty(a.Content,"Author")
+	a.Date,err=parseDate(a.Meta["Date"])
 	if err!=nil {
 		return nil,errors.New("Article with corrupted date")
 	}
 	a.Id=a.Meta["Id"]
+	
+	a.Date,_=parseDate(a.Meta["Date"])
+	a.DateFormat=make(map[string]string)
+	a.DateFormat["PostDateFormat"]=a.GetDateString(PostDateFormat)
+	a.DateFormat["SitemapDateFormat"]=a.GetDateString(OrgDateFormat)
+	a.DateFormat["RSSDateFormat"]=a.GetDateString(RSSDateFormat)
 	
 	return a,nil
 }
@@ -88,41 +104,21 @@ func (a *Article) GetHTMLContent()(string){
 	return string(convertToHtml(a.Content))
 }
 
+/*
 func (a *Article) GetStringContent()(string){
 	return string(a.Content)
 }
-
-func (a *Article) GetStringDate()(string){
-	t,_:=orgDate2Time(a.Meta["Date"])
-	return t.Format(htmlDateTemplate)
-}
-
-func (a *Article) GetStringSitemapDate()(string){
-	t,_:=orgDate2Time(a.Meta["Date"])
-	return t.Format(orgDateTemplate)
-}
-
-func (a *Article) GetStringAtomDate()(string){
-	t,_:=orgDate2Time(a.Meta["Date"])
-	return t.Format(atomDateFormat)
-}
-
-//Wed, 02 Oct 2002 13:00:00 GMT
-//Mon, 02 Jan 2006
-func (a *Article) GetStringRSSDate()(string){
-	t,_:=orgDate2Time(a.Meta["Date"])
-	return t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
-}
+*/
 
 func (a *Article) GetDate()(time.Time){
-	t,_:=orgDate2Time(a.Meta["Date"])
+	t,_:=parseDate(a.Meta["Date"])
 	return t
 }
 
-func (a *Article) GetAuthor()(string){
-	return a.Meta["Author"]
-}
 
+func (a* Article) GetDateString(format string)(string){
+	return a.Date.Format(format)
+}
 
 
 
@@ -146,13 +142,19 @@ func (a *Article) WriteOrgFile(ofile string)(error){
 
 
 
-func time2OrgDate(date time.Time)(string){
-	s:=date.Format("<"+orgDateTemplate)
+/*
+       Private Methods
+*/
+
+
+func date2String(date time.Time)(string){
+	s:=date.Format("<"+OrgDateFormat)
 	s=s+" "+date.Weekday().String()[:3]+">"
 	return s
 }
 
-func orgDate2Time(orgdate string)(time.Time,error){
+
+func parseDate(orgdate string)(time.Time,error){
 	
 	dayReg:= regexp.MustCompile("[a-zA-Z\\>\\< ]+")
 	orgdate=dayReg.ReplaceAllString(orgdate,"")
@@ -161,12 +163,7 @@ func orgDate2Time(orgdate string)(time.Time,error){
 }
 
 
-
-
-
-
-
-func getProperty(content []byte, key string)(string){
+func parseProperty(content []byte, key string)(string){
 
 	propReg:= regexp.MustCompile("(?m)^:"+key+":.+$")
 	p:=string(propReg.Find(content))
@@ -177,7 +174,8 @@ func getProperty(content []byte, key string)(string){
 	return strings.Trim(f[1]," \t")
 }
 
-func getTitle(content []byte)(string){
+
+func parseTitle(content []byte)(string){
 
 	propReg:= regexp.MustCompile("(?m)^\\* .+$")
 	p:=string(propReg.Find(content))
