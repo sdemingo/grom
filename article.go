@@ -107,6 +107,13 @@ func (a *Article) GetStringAtomDate()(string){
 	return t.Format(atomDateFormat)
 }
 
+//Wed, 02 Oct 2002 13:00:00 GMT
+//Mon, 02 Jan 2006
+func (a *Article) GetStringRSSDate()(string){
+	t,_:=orgDate2Time(a.Meta["Date"])
+	return t.Format("Mon, 02 Jan 2006 15:04:05 GMT")
+}
+
 func (a *Article) GetDate()(time.Time){
 	t,_:=orgDate2Time(a.Meta["Date"])
 	return t

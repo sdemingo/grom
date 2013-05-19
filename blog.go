@@ -300,6 +300,11 @@ func (blog *Blog)Build()(error){
 		return err
 	}
 
+	err=blog.makeRSSFeed()
+	if err!=nil{
+		return err
+	}
+
 	return nil
 }
 
@@ -638,11 +643,33 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 {{end}}
 `
 
+var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0">
+<channel>
+<title>{{.Info.Name}}</title>
+<link>{{.Info.Url}}</link>
+<description>{{.Info.Subtitle}}</description>
+{{$b:=.}}
+{{ range $a:=.Posts}}
+<item>
+<title>{{$a.Title}}</title>
+<pubDate>{{$a.GetStringRSSDate}}</pubDate>
+<guid>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</guid>
+<link>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</link>
+<description>{{$a.Title}}</description>
+</item>
+{{end}}
+</channel>
+</rss>
+{{end}}
+`
+
 
 func (blog *Blog)GetFeedDate()(string){
 	t:=time.Now()
 	return t.Format(atomDateFormat)
 }
+
 
 func (blog *Blog)makeAtomFeed()(error){
 	f,err:=os.Create(blog.Dir+"atom.xml")
@@ -663,3 +690,25 @@ func (blog *Blog)makeAtomFeed()(error){
 
 	return nil
 }
+
+
+func (blog *Blog)makeRSSFeed()(error){
+	f,err:=os.Create(blog.Dir+"rss.xml")
+	if err!=nil{
+		return err
+	}
+
+	t:=template.New("rss")
+	_,err=t.Parse(rssTemplate)
+	if (err!=nil){
+		return err
+	}
+
+	err=t.ExecuteTemplate(f,"rss",blog)
+	if (err!=nil){
+		return err
+	}
+
+	return nil
+}
+
