@@ -33,6 +33,7 @@ import (
 	"image"
 	"errors"
 	"io"
+	"time"
 )
 
 
@@ -290,6 +291,11 @@ func (blog *Blog)Build()(error){
 	}
 
 	err=blog.makeSitemap()
+	if err!=nil{
+		return err
+	}
+
+	err=blog.makeAtomFeed()
 	if err!=nil{
 		return err
 	}
@@ -592,6 +598,65 @@ func (blog *Blog)makeSitemap()(error){
 	}
 
 	err=t.ExecuteTemplate(f,"sitemap",blog)
+	if (err!=nil){
+		return err
+	}
+
+	return nil
+}
+
+
+var atomDateFormat=time.RFC3339
+
+
+var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<id>{{.Info.Url}}/atom.xml</id>
+<title>{{.Info.Name}}</title>
+<subtitle>{{.Info.Subtitle}}</subtitle>
+<link href="{{.Info.Url}}/atom.xml" rel="self" />
+<link href="{{.Info.Url}}" />
+<updated>{{.GetFeedDate}}</updated>
+{{$b:=.}}
+{{ range $a:=.Posts}}
+
+<entry>
+<title>{{$a.Title}}</title>
+<link href="{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html" />
+<id>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</id>
+<updated>{{$a.GetStringAtomDate}}</updated>
+<author>
+<name>{{$a.Meta.Author}}</name>
+</author>
+<summary>
+{{$a.Title}}
+</summary>
+</entry>
+
+{{end}}
+</feed>
+{{end}}
+`
+
+
+func (blog *Blog)GetFeedDate()(string){
+	t:=time.Now()
+	return t.Format(atomDateFormat)
+}
+
+func (blog *Blog)makeAtomFeed()(error){
+	f,err:=os.Create(blog.Dir+"atom.xml")
+	if err!=nil{
+		return err
+	}
+
+	t:=template.New("atom")
+	_,err=t.Parse(atomTemplate)
+	if (err!=nil){
+		return err
+	}
+
+	err=t.ExecuteTemplate(f,"atom",blog)
 	if (err!=nil){
 		return err
 	}

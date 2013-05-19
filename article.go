@@ -33,8 +33,8 @@ type Article struct{
 	Id string
 	Title string
 	Date time.Time
-	content []byte
-	meta map[string]string
+	Content []byte
+	Meta map[string]string
 
 }
 
@@ -52,10 +52,10 @@ func NewArticle(id string)(*Article,error){
 	a.Id=checkID.ReplaceAllString(id,"-")
 
 
-	a.meta=make(map[string]string)
-	a.meta["Id"]=a.Id
-	a.meta["Date"]=time2OrgDate(a.Date)
-	a.meta["Author"]="Sergio de Mingo"
+	a.Meta=make(map[string]string)
+	a.Meta["Id"]=a.Id
+	a.Meta["Date"]=time2OrgDate(a.Date)
+	a.Meta["Author"]="Sergio de Mingo"
 
 	return a,nil
 }
@@ -68,43 +68,52 @@ func ParseArticle(ifile string)(*Article,error){
 		return nil,err
 	}
 
-	a.content=b
-	a.Title=getTitle(a.content)
-	a.meta=make(map[string]string)
-	a.meta["Id"]=getProperty(a.content,"Id")
-	a.meta["Date"]=getProperty(a.content,"Date")
-	a.meta["Author"]=getProperty(a.content,"Author")
-	a.Date,err=orgDate2Time(a.meta["Date"])
+	a.Content=b
+	a.Title=getTitle(a.Content)
+	a.Meta=make(map[string]string)
+	a.Meta["Id"]=getProperty(a.Content,"Id")
+	a.Meta["Date"]=getProperty(a.Content,"Date")
+	a.Meta["Author"]=getProperty(a.Content,"Author")
+	a.Date,err=orgDate2Time(a.Meta["Date"])
 	if err!=nil {
 		return nil,errors.New("Article with corrupted date")
 	}
-	a.Id=a.meta["Id"]
+	a.Id=a.Meta["Id"]
 	
 	return a,nil
 }
 
 
 func (a *Article) GetHTMLContent()(string){
-	return string(convertToHtml(a.content))
+	return string(convertToHtml(a.Content))
+}
+
+func (a *Article) GetStringContent()(string){
+	return string(a.Content)
 }
 
 func (a *Article) GetStringDate()(string){
-	t,_:=orgDate2Time(a.meta["Date"])
+	t,_:=orgDate2Time(a.Meta["Date"])
 	return t.Format(htmlDateTemplate)
 }
 
 func (a *Article) GetStringSitemapDate()(string){
-	t,_:=orgDate2Time(a.meta["Date"])
+	t,_:=orgDate2Time(a.Meta["Date"])
 	return t.Format(orgDateTemplate)
 }
 
+func (a *Article) GetStringAtomDate()(string){
+	t,_:=orgDate2Time(a.Meta["Date"])
+	return t.Format(atomDateFormat)
+}
+
 func (a *Article) GetDate()(time.Time){
-	t,_:=orgDate2Time(a.meta["Date"])
+	t,_:=orgDate2Time(a.Meta["Date"])
 	return t
 }
 
 func (a *Article) GetAuthor()(string){
-	return a.meta["Author"]
+	return a.Meta["Author"]
 }
 
 
@@ -113,7 +122,7 @@ func (a *Article) GetAuthor()(string){
 func (a *Article) WriteOrgFile(ofile string)(error){
 	s:="* Article Title\n"
 	s=s+":PROPERTIES:\n"
-	for k,v:=range a.meta{
+	for k,v:=range a.Meta{
 		s=s+":"+k+": "+v+"\n"
 	}
 	s=s+":END:\n"
@@ -221,7 +230,7 @@ func convertToHtml(content []byte)([]byte){
 	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
 	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
 	//out=parReg.ReplaceAll(out,[]byte(".\n<p>"))
-	out=parReg.ReplaceAll(out,[]byte("\n\n<p>$text"))
+	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
 	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
 
 
