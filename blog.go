@@ -295,10 +295,12 @@ func (blog *Blog)Build()(error){
 		return err
 	}
 
+/*
 	err=blog.makeAtomFeed()
 	if err!=nil{
 		return err
 	}
+*/
 
 	err=blog.makeRSSFeed()
 	if err!=nil{
@@ -573,7 +575,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{ range $a:=.Posts}}
   <url>
       <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
-      <lastmod>{{$a.GetStringSitemapDate}}</lastmod>
+      <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
    </url>
@@ -581,7 +583,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{ range $a:=.Statics}}
   <url>
       <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
-      <lastmod>{{$a.GetStringSitemapDate}}</lastmod>
+      <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
    </url>
@@ -611,7 +613,7 @@ func (blog *Blog)makeSitemap()(error){
 }
 
 
-var atomDateFormat=time.RFC3339
+
 
 
 var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
@@ -629,7 +631,7 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 <title>{{$a.Title}}</title>
 <link href="{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html" />
 <id>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</id>
-<updated>{{$a.GetStringAtomDate}}</updated>
+<updated>{{$a.DateFormat.AtomDateFormat}}</updated>
 <author>
 <name>{{$a.Meta.Author}}</name>
 </author>
@@ -653,7 +655,7 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 {{ range $a:=.Posts}}
 <item>
 <title>{{$a.Title}}</title>
-<pubDate>{{$a.GetStringRSSDate}}</pubDate>
+<pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
 <guid>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</guid>
 <link>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</link>
 <description>{{$a.Title}}</description>
@@ -667,7 +669,7 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 
 func (blog *Blog)GetFeedDate()(string){
 	t:=time.Now()
-	return t.Format(atomDateFormat)
+	return t.Format(AtomDateFormat)
 }
 
 
