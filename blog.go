@@ -68,6 +68,7 @@ type Blog struct{
 	Nstatics int
 	Years []bool
 	Months []string
+	Selected int
 }
 
 
@@ -354,6 +355,23 @@ func (blog *Blog)GetLastArticles()([]*Article){
 }
 
 
+func (blog *Blog)GetSelectedPost()(*Article){
+	return blog.Posts[blog.Selected]
+}
+
+
+func (blog *Blog)GetSelectedStatic()(*Article){
+	return blog.Statics[blog.Selected]
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -376,34 +394,6 @@ func (s ByDate) Less(i, j int) bool {
 
 
 
-
-
-
-
-type BlogDataTemplate struct{
-	Blog *Blog
-	Pages []*Article
-}
-
-
-/*
-func (blog *Blog)GetArticleId(a* Article)(string){
-	if a==nil {
-		return ""
-	}
-	d:=a.GetDate()
-	ds:=d.Format("2006-01")
-	return ds+"-"+a.Id
-}
-*/
-
-
-
-
-
-
-
-
 func (blog *Blog)makeIndex()(error){
 
 	f,err:=os.Create(blog.Dir+"index.html")
@@ -411,14 +401,6 @@ func (blog *Blog)makeIndex()(error){
 		return err
 	}
 
-	n_post_in_index:=len(blog.Posts)
-	if n_post_in_index>5 {
-		n_post_in_index=5  //max 5 articles in index
-	}
-
-	data:=new (BlogDataTemplate)
-	data.Blog=blog
-	data.Pages=blog.Posts[:n_post_in_index]
 
 	t:=template.New("main")
 	_,err=t.ParseFiles(blog.ThemeDir+"/main.html",
@@ -427,7 +409,7 @@ func (blog *Blog)makeIndex()(error){
 		return err
 	}
 
-	err=t.ExecuteTemplate(f,"main",data)
+	err=t.ExecuteTemplate(f,"main",blog)
 	if (err!=nil){
 		return err
 	}
@@ -454,9 +436,11 @@ func (blog *Blog) makeStatic(a *Article)(error){
 		}
 	}
 
-	data:=new (BlogDataTemplate)
-	data.Blog=blog
-	data.Pages=blog.Statics[s:s+1]
+	if s<0{
+		return errors.New("Bad static to build")
+	}
+
+	blog.Selected=s
 
 	t:=template.New("main")
 	_,err=t.ParseFiles(blog.ThemeDir+"/main.html",
@@ -465,7 +449,7 @@ func (blog *Blog) makeStatic(a *Article)(error){
 		return err
 	}
 
-	t.ExecuteTemplate(f,"main",data)
+	t.ExecuteTemplate(f,"main",blog)
 
 	return nil
 }
@@ -493,9 +477,7 @@ func (blog *Blog) makeArticle(a *Article)(error){
 		return errors.New("Bad article to build")
 	}
 
-	data:=new (BlogDataTemplate)
-	data.Blog=blog
-	data.Pages=blog.Posts[s:s+1]
+	blog.Selected=s
 
 	t:=template.New("main")
 	_,err=t.ParseFiles(blog.ThemeDir+"/main.html",
@@ -504,7 +486,7 @@ func (blog *Blog) makeArticle(a *Article)(error){
 		return err
 	}
 
-	t.ExecuteTemplate(f,"main",data)
+	t.ExecuteTemplate(f,"main",blog)
 
 	return nil
 }
@@ -518,10 +500,6 @@ func (blog *Blog)makeArchive()(error){
 		return err
 	}
 
-	data:=new (BlogDataTemplate)
-	data.Blog=blog
-	data.Pages=blog.Posts
-
 	t:=template.New("main")
 	_,err=t.ParseFiles(blog.ThemeDir+"/main.html",
 		blog.ThemeDir+"/archive.html")
@@ -529,7 +507,7 @@ func (blog *Blog)makeArchive()(error){
 		return err
 	}
 
-	err=t.ExecuteTemplate(f,"main",data)
+	err=t.ExecuteTemplate(f,"main",blog)
 	if (err!=nil){
 		return err
 	}
@@ -597,7 +575,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{$b:=.}}
 {{ range $a:=.Posts}}
   <url>
-      <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
+      <loc>{{$b.Info.Url}}/{{$a.GetValidId}}.html</loc>
       <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
@@ -605,7 +583,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{end}}
 {{ range $a:=.Statics}}
   <url>
-      <loc>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</loc>
+      <loc>{{$b.Info.Url}}/{{$a.GetValidId}}.html</loc>
       <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
@@ -653,7 +631,7 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 <entry>
 <title>{{$a.Title}}</title>
 <link href="{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html" />
-<id>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</id>
+<id>{{$b.Info.Url}}/{{$a.GetValidId}}.html</id>
 <updated>{{$a.DateFormat.AtomDateFormat}}</updated>
 <author>
 <name>{{$a.Meta.Author}}</name>
@@ -679,8 +657,8 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 <item>
 <title>{{$a.Title}}</title>
 <pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
-<guid>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</guid>
-<link>{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html</link>
+<guid>{{$b.Info.Url}}/{{$a.GetValidId}}.html</guid>
+<link>{{$b.Info.Url}}/{{$a.GetValidId}}.html</link>
 <description>{{$a.Title}}</description>
 </item>
 {{end}}
