@@ -1,9 +1,8 @@
 {{define "body"}}
 {{$b:=.}}
-{{ range $a:=.Statics}}
+{{ $a:=.GetSelectedStatic}}
     <div class="article-title">
     <a href='{{$a.GetValidId}}.html'><h1>{{$a.Title}}</h1></a>
     </div>
     {{$a.GetHTMLContent}}
-{{end}}
 {{end}}

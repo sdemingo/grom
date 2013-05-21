@@ -404,7 +404,7 @@ func (blog *Blog)makeIndex()(error){
 
 	t:=template.New("main")
 	_,err=t.ParseFiles(blog.ThemeDir+"/main.html",
-		blog.ThemeDir+"/post.html")
+		blog.ThemeDir+"/last-posts.html")
 	if (err!=nil){
 		return err
 	}
