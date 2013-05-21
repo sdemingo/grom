@@ -110,6 +110,18 @@ func (a *Article) GetStringContent()(string){
 }
 */
 
+
+func (a *Article)GetValidId()(string){
+	if a==nil {
+		return ""
+	}
+	d:=a.GetDate()
+	ds:=d.Format("2006-01")
+	return ds+"-"+a.Id
+}
+
+
+
 func (a *Article) GetDate()(time.Time){
 	t,_:=parseDate(a.Meta["Date"])
 	return t

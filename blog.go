@@ -312,6 +312,52 @@ func (blog *Blog)Build()(error){
 
 
 
+func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
+
+	a:=make([]*Article,100)
+	n:=0
+	date:=""
+	year=year+2000
+	if (month<10){
+		date=fmt.Sprintf("%d-0%d",year,month)
+	}else{
+		date=fmt.Sprintf("%d-%d",year,month)
+	}
+
+	for p:=0;p<blog.Nposts;p++{
+		if strings.HasPrefix(blog.Posts[p].GetValidId(), date){
+			a=append(a,blog.Posts[p])
+			n++
+		}
+	}
+
+	if (n==0){
+		return nil
+	}
+	return a
+}
+
+
+/*
+ Here, it must be GetArticlesByTag when tags are implemented
+*/
+
+
+func (blog *Blog)GetLastArticles()([]*Article){
+
+	n_post_in_index:=len(blog.Posts)
+	if n_post_in_index>5 {
+		n_post_in_index=5  //max 5 articles in index
+	}
+
+	return blog.Posts[:n_post_in_index]
+}
+
+
+
+
+
+
 /*
  Mecanismo de ordenación de los arrays de artículos
 */
@@ -340,6 +386,7 @@ type BlogDataTemplate struct{
 }
 
 
+/*
 func (blog *Blog)GetArticleId(a* Article)(string){
 	if a==nil {
 		return ""
@@ -348,33 +395,9 @@ func (blog *Blog)GetArticleId(a* Article)(string){
 	ds:=d.Format("2006-01")
 	return ds+"-"+a.Id
 }
+*/
 
 
-func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
-
-	a:=make([]*Article,100)
-
-	n:=0
-	date:=""
-	year=year+2000
-	if (month<10){
-		date=fmt.Sprintf("%d-0%d",year,month)
-	}else{
-		date=fmt.Sprintf("%d-%d",year,month)
-	}
-
-	for p:=0;p<blog.Nposts;p++{
-		if strings.HasPrefix(blog.GetArticleId(blog.Posts[p]), date){
-			a=append(a,blog.Posts[p])
-			n++
-		}
-	}
-
-	if (n==0){
-		return nil
-	}
-	return a
-}
 
 
 
@@ -451,7 +474,7 @@ func (blog *Blog) makeStatic(a *Article)(error){
 
 func (blog *Blog) makeArticle(a *Article)(error){
 	
-	f,err:=os.Create(blog.Dir+blog.GetArticleId(a)+".html")
+	f,err:=os.Create(blog.Dir+a.GetValidId()+".html")
 	if err!=nil{
 		return err
 	}
