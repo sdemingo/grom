@@ -5,23 +5,24 @@
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Condensed" />
 <link href='http://fonts.googleapis.com/css?family=Oxygen' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" type="text/css" href="themes/default/default.css">
+<link rel="stylesheet" type="text/css" href="{{.Info.Url}}/themes/{{.Info.Theme}}/{{.Info.Theme}}.css">
 <link rel="alternate" title="{{.Info.Name}}"
       href="{{.Info.Url}}/rss.xml" type="application/rss+xml">
 </head>
 <body>
 
 <div id="header">
-<h1><a href='index.html'>{{.Info.Name}}</a></h1>
+<h1><a href="{{.Info.Url}}/index.html">{{.Info.Name}}</a></h1>
 <div class="subtitle">{{.Info.Subtitle}}</div>
 </div>
 
 <div id="static-links">
 <ul>
-<li><a href='archive.html'>Archivo</a></li>
-<li><a href='rss.xml'>Feed</a></li>
+<li><a href="{{.Info.Url}}/html/archive.html">Archivo</a></li>
+<li><a href="{{.Info.Url}}/rss.xml">Feed</a></li>
+{{$b:=.}}
 {{ range $s:=.Statics}}
-    <a href='static-{{$s.Id}}.html'>{{$s.Title}}</a>
+    <a href="{{$b.Info.Url}}/html/static-{{$s.Id}}.html">{{$s.Title}}</a>
 {{end}}
 </ul>
 </div>

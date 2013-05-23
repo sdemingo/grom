@@ -111,6 +111,7 @@
 
 body{
     text-align:center;
+    background-color:white;
 }
 
 
@@ -120,6 +121,7 @@ body{
     clear:both;
     width:600px;
     margin:0 auto 0 auto;
+    background-color:white;
 
     font-family: 'Oxygen', sans-serif;
     font-size: 16px;
@@ -176,6 +178,7 @@ blockquote{
     border-left: 5px solid #ccc;
     margin-left: 25px;
     padding-left: 25px;
+    background-color:white;
 }
 
 pre {
@@ -183,6 +186,7 @@ pre {
     padding: 20px;
     margin-left:25px;
     width:500px;
+    background-color:white;
 
     border: 1px double #ccc;
     background-color:#F8F8F8;
@@ -195,6 +199,7 @@ pre {
     width:600px;
     display: table-cell;
     text-align: center;
+    background-color:white;
 }
 
 
