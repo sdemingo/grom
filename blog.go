@@ -34,6 +34,7 @@ import (
 	"errors"
 	"io"
 	"time"
+	"regexp"
 )
 
 
@@ -103,6 +104,7 @@ func CreateBlog(dir string,themes string)(*Blog,error){
 	os.Mkdir(dir,0755)
 	os.Mkdir(dir+"static",0755)
 	os.Mkdir(dir+"post",0755)
+	os.Mkdir(dir+"html",0755)
 	os.Mkdir(dir+"img",0755)
 	os.Mkdir(dir+"img/thumbs",0755)
 
@@ -421,7 +423,7 @@ func (blog *Blog)makeIndex()(error){
 
 func (blog *Blog) makeStatic(a *Article)(error){
 	
-	f,err:=os.Create(blog.Dir+"static-"+a.Id+".html")
+	f,err:=os.Create(blog.Dir+"html/static-"+a.Id+".html")
 	if err!=nil{
 		return err
 	}
@@ -458,7 +460,7 @@ func (blog *Blog) makeStatic(a *Article)(error){
 
 func (blog *Blog) makeArticle(a *Article)(error){
 	
-	f,err:=os.Create(blog.Dir+a.GetValidId()+".html")
+	f,err:=os.Create(blog.Dir+"html/"+a.GetValidId()+".html")
 	if err!=nil{
 		return err
 	}
@@ -495,7 +497,7 @@ func (blog *Blog) makeArticle(a *Article)(error){
 
 func (blog *Blog)makeArchive()(error){
 
-	f,err:=os.Create(blog.Dir+"archive.html")
+	f,err:=os.Create(blog.Dir+"html/archive.html")
 	if err!=nil{
 		return err
 	}
@@ -575,7 +577,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{$b:=.}}
 {{ range $a:=.Posts}}
   <url>
-      <loc>{{$b.Info.Url}}/{{$a.GetValidId}}.html</loc>
+      <loc>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</loc>
       <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
@@ -583,7 +585,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{end}}
 {{ range $a:=.Statics}}
   <url>
-      <loc>{{$b.Info.Url}}/{{$a.GetValidId}}.html</loc>
+      <loc>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</loc>
       <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
@@ -630,15 +632,13 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 
 <entry>
 <title>{{$a.Title}}</title>
-<link href="{{$b.Info.Url}}/{{$b.GetArticleId $a}}.html" />
-<id>{{$b.Info.Url}}/{{$a.GetValidId}}.html</id>
+<link href="{{$b.Info.Url}}/html/{{$b.GetArticleId $a}}.html" />
+<id>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</id>
 <updated>{{$a.DateFormat.AtomDateFormat}}</updated>
 <author>
 <name>{{$a.Meta.Author}}</name>
 </author>
-<summary>
-{{$a.Title}}
-</summary>
+<description><![CDATA[{{$b.GetHTMLContent $a}}]]></description>
 </entry>
 
 {{end}}
@@ -657,9 +657,9 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 <item>
 <title>{{$a.Title}}</title>
 <pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
-<guid>{{$b.Info.Url}}/{{$a.GetValidId}}.html</guid>
-<link>{{$b.Info.Url}}/{{$a.GetValidId}}.html</link>
-<description>{{$a.Title}}</description>
+<guid>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</guid>
+<link>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</link>
+<description><![CDATA[{{$b.GetHTMLContent $a}}]]></description>
 </item>
 {{end}}
 </channel>
@@ -714,4 +714,144 @@ func (blog *Blog)makeRSSFeed()(error){
 
 	return nil
 }
+
+
+
+
+
+
+/*
+ HTML conversion
+*/
+
+var head1Reg = regexp.MustCompile("(?m)^\\* (?P<head>.+)\\n")
+var head2Reg = regexp.MustCompile("(?m)^\\*\\* (?P<head>.+)\\n")
+var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[^\\]]+)\\]\\]")
+var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\[file:\\.\\./img/(?P<thumb>[^\\]]+)\\]\\]")
+var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
+var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s).+)^\\#\\+END_SRC\\n")
+var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
+var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
+var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
+var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
+
+//estilos de texto
+var boldReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)\\*(?P<text>[^\\s][^\\*]+)\\*(?P<suffix>[\\s|\\W]*)")
+var italicReg = regexp.MustCompile("(?P<prefix>[\\s])/(?P<text>[^\\s][^/]+)/(?P<suffix>[^A-Za-z0-9]*)")
+var ulineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)_(?P<text>[^\\s][^_]+)_(?P<suffix>[\\s|\\W]*)")
+var codeLineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)=(?P<text>[^\\s][^\\=]+)=(?P<suffix>[\\s|\\W]*)")
+var strikeReg = regexp.MustCompile("(?P<prefix>[\\s|[\\W]+)\\+(?P<text>[^\\s][^\\+]+)\\+(?P<suffix>[\\s|\\W]*)")
+
+
+// listas
+var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s*(?P<item>.+)\\n")
+var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s*(?P<item>.+)\\n")
+var ulistReg = regexp.MustCompile("(?P<items>(\\<fake-uli\\>.+\\n)+)")
+var olistReg = regexp.MustCompile("(?P<items>(\\<fake-oli\\>.+\\n)+)")
+
+
+
+
+func (blog *Blog) GetHTMLContent(a *Article)(string){
+	content:=a.Content
+	
+	var url string
+	var ok bool
+
+	if url,ok=blog.Info["Url"]; !ok {
+		panic(errors.New("No url defined in config.json"))
+	}
+
+
+	// First remove all HTML raw tags for security
+	out:=rawHTML.ReplaceAll(content,[]byte(""))
+
+	// headings (h1 is not admit in the post body)
+	out=head1Reg.ReplaceAll(out,[]byte(""))
+	out=head2Reg.ReplaceAll(out,[]byte("<h2>$head</h2>\n"))
+
+
+	// images and blocks
+	out=imgReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$src'><img src='"+url+"/img/thumbs/$src'/></a></div>"))
+	out=imgLinkReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$img'><img src='"+url+"/img/thumbs/$thumb'/></a></div>"))
+	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
+	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
+	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
+	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
+	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
+
+
+	// font styles
+	out=italicReg.ReplaceAll(out,[]byte("$prefix<i>$text</i>$suffix"))
+	out=boldReg.ReplaceAll(out,[]byte("$prefix<b>$text</b>$suffix"))
+	out=ulineReg.ReplaceAll(out,[]byte("$prefix<u>$text</u>$suffix"))
+	out=codeLineReg.ReplaceAll(out,[]byte("$prefix<code>$text</code>$suffix"))
+	out=strikeReg.ReplaceAll(out,[]byte("$prefix<s>$text</s>$suffix"))
+
+
+	// List with fake tags for items
+	out=ulistItemReg.ReplaceAll(out,[]byte("<fake-uli>$item</fake-uli>\n"))
+	out=ulistReg.ReplaceAll(out,[]byte("<ul>\n$items</ul>\n"))
+	out=olistItemReg.ReplaceAll(out,[]byte("<fake-oli>$item</fake-oli>\n"))
+	out=olistReg.ReplaceAll(out,[]byte("<ol>\n$items</ol>\n"))
+
+	// Removing fake items tags
+	sout:=string(out)
+	sout=strings.Replace(sout,"<fake-uli>","<li>",-1)
+	sout=strings.Replace(sout,"</fake-uli>","</li>",-1)
+	sout=strings.Replace(sout,"<fake-oli>","<li>",-1)
+	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
+	
+	return sout
+
+
+}
+
+
+/*
+func (blog *Blog)convertToHtml(content []byte)([]byte){
+	// First remove all HTML raw tags for security
+	out:=rawHTML.ReplaceAll(content,[]byte(""))
+
+	// headings (h1 is not admit in the post body)
+	out=head1Reg.ReplaceAll(out,[]byte(""))
+	out=head2Reg.ReplaceAll(out,[]byte("<h2>$head</h2>\n"))
+
+
+	// images and blocks
+	out=imgReg.ReplaceAll(out,[]byte("<div class='image'><a href='img/$src'><img src='img/thumbs/$src'/></a></div>"))
+	out=imgLinkReg.ReplaceAll(out,[]byte("<div class='image'><a href='img/$img'><img src='img/thumbs/$thumb'/></a></div>"))
+	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
+	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
+	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
+	//out=parReg.ReplaceAll(out,[]byte(".\n<p>"))
+	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
+	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
+
+
+	// font styles
+
+	out=italicReg.ReplaceAll(out,[]byte("$prefix<i>$text</i>$suffix"))
+	out=boldReg.ReplaceAll(out,[]byte("$prefix<b>$text</b>$suffix"))
+	out=ulineReg.ReplaceAll(out,[]byte("$prefix<u>$text</u>$suffix"))
+	out=codeLineReg.ReplaceAll(out,[]byte("$prefix<code>$text</code>$suffix"))
+	out=strikeReg.ReplaceAll(out,[]byte("$prefix<s>$text</s>$suffix"))
+
+
+	// List with fake tags for items
+	out=ulistItemReg.ReplaceAll(out,[]byte("<fake-uli>$item</fake-uli>\n"))
+	out=ulistReg.ReplaceAll(out,[]byte("<ul>\n$items</ul>\n"))
+	out=olistItemReg.ReplaceAll(out,[]byte("<fake-oli>$item</fake-oli>\n"))
+	out=olistReg.ReplaceAll(out,[]byte("<ol>\n$items</ol>\n"))
+
+	// Removing fake items tags
+	sout:=string(out)
+	sout=strings.Replace(sout,"<fake-uli>","<li>",-1)
+	sout=strings.Replace(sout,"</fake-uli>","</li>",-1)
+	sout=strings.Replace(sout,"<fake-oli>","<li>",-1)
+	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
+	
+	return []byte(sout)
+}
+*/
 
