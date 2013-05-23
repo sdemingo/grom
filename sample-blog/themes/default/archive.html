@@ -1,23 +1,23 @@
 {{define "body"}}
 <h2>Archivo</h2>
-{{$b:=.Blog}}
+{{$b:=.}}
 {{ range $a,$v:=$b.Years}}
 {{if $v}} 20{{$a}}
 <ul>
-{{ range $mi,$mt:=$b.Months}} 
-{{$am:=$b.GetArticlesByDate $a $mi}} 
+{{ range $mi,$mt:=$b.Months}}
+{{$am:=$b.GetArticlesByDate $a $mi}}
 {{if $am}}
 	    <li>{{$mt}}
 	    <ul>
-	    {{ range $a:=$am}} 
+	    {{ range $a:=$am}}
 		{{if $a}}
-		    <li><a href='{{$b.GetArticleId $a}}.html'>{{$a.Title}}</a>
-		{{end}} 
+		    <li><a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html">{{$a.Title}}</a>
+		{{end}}
 	    {{end}}
 	    </ul>
-	{{end}} 
+	{{end}}
     {{end}}
     </ul>
-    {{end}} 
-{{end}} 
+    {{end}}
+{{end}}
 {{end}}

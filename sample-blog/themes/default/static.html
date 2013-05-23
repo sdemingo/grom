@@ -1,7 +1,8 @@
 {{define "body"}}
-{{$b:=.Blog}}
-{{ range $a:=.Pages}}
-    <a href='{{$b.GetArticleId $a}}.html'><h1>{{$a.Title}}</h1></a>
-    {{$a.GetHTMLContent}}
-{{end}}
+{{$b:=.}}
+{{ $a:=.GetSelectedStatic}}
+    <div class="article-title">
+    <a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html"><h1>{{$a.Title}}</h1></a>
+    </div>
+    {{$b.GetHTMLContent $a}}
 {{end}}
