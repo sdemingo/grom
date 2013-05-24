@@ -48,18 +48,18 @@ const LICENSE = `Copyright (C) 2013  Sergio de Mingo
 
 const HELP =`    usage: grom [cmd] [args]
 	      
-	      - create-post   : Create a new post
-	      - create-static : Create a new static page 
-	      - create-blog   : Create a new blog
-	      - build-blog    : Build html files from the sources
-   	      - clean-blog    : Remove all html files
-	      - help          : Show this message
+	      - create     : Create a new blog
+	      - build      : Build html files from the sources
+              - serve      : Serve the blog on a builtin web service
+	      - add-post   : Create a new post
+	      - add-static : Create a new static page 
+	      - help       : Show this message
 `
 
 func create_post(args []string){
 	var t string
 	if (len(args)<3){
-		fmt.Printf("grom create-post <blog-dir> <post-id>\n",t)
+		fmt.Printf("grom add-post <blog-dir> <post-id>\n",t)
 		return
 	}
 
@@ -84,7 +84,7 @@ func create_post(args []string){
 func create_static(args []string){
 	var t string
 	if (len(args)<3){
-		fmt.Printf("grom create-static <blog-dir> <page-id>\n",t)
+		fmt.Printf("grom add-static <blog-dir> <page-id>\n",t)
 		return
 	}
 
@@ -109,7 +109,7 @@ func create_static(args []string){
 func create_blog(args []string){
 
 	if (len(args)<3){
-		fmt.Printf("grom create-blog <grom-dir> <new-blog-dir>\n")
+		fmt.Printf("grom create <grom-dir> <new-blog-dir>\n")
 		return
 	}
 
@@ -122,12 +122,13 @@ func create_blog(args []string){
 	
 }
 
-func clean_blog(args []string){
+func serve_blog(args []string){
 	var t string
 	if (len(args)<2){
-		fmt.Printf("grom clean-blog <blog-dir>\n",t)
+		fmt.Printf("grom serve <blog-dir>\n",t)
 		return
 	}
+
 	dir:=checkDirPath(args[1])
 	blog:=LoadBlog(dir)
 	if (blog==nil){
@@ -136,19 +137,29 @@ func clean_blog(args []string){
 
 	fmt.Printf("Load info from: %s\n",blog.Info["Name"])
 	
-	err:=blog.Clean()
+	blog.Info["Url"]="http://localhost:6666"
+
+	err:=blog.Build()
 	if (err!=nil){
 		fmt.Println(err)
 	}else{
-		fmt.Printf("Clean blog succesfully\n")
+		fmt.Printf("Build blog succesfully\n")
 	}
+
+	warning:=`
+        Blog has been build using a testing root URL. 
+        Remember build again before push it on production.
+`
+	fmt.Printf(warning)
+	fmt.Printf("\nServe blog on: %s\n",blog.Info["Url"])
+	err=blog.Serve()
 }
 
 
 func build_blog(args []string){
 	var t string
 	if (len(args)<2){
-		fmt.Printf("grom build-blog <blog-dir>\n",t)
+		fmt.Printf("grom build <blog-dir>\n",t)
 		return
 	}
 	dir:=checkDirPath(args[1])
@@ -196,17 +207,20 @@ func main() {
 
 	cmd:=flag.Arg(0)
 	switch (cmd){
-	case "create-post":
+	case "add-post":
 		create_post(args)
 
-	case "create-static":
+	case "add-static":
 		create_static(args)
 		
-	case "create-blog":
+	case "create":
 		create_blog(args)
 
-	case "build-blog":
+	case "build":
 		build_blog(args)
+
+	case "serve":
+		serve_blog(args)
 
 	default:
 		help(args)
