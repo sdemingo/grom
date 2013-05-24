@@ -2,5 +2,6 @@
   "Name": "My new Blog",
   "Owner": "Grom",
   "Subtitle": "I wanna be Grom!!",
-  "Theme": "default"
+  "Theme": "default",
+  "Url" : "http://example.com"
  }
