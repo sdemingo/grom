@@ -137,7 +137,7 @@ func serve_blog(args []string){
 
 	fmt.Printf("Load info from: %s\n",blog.Info["Name"])
 	
-	blog.Info["Url"]="http://localhost:6666"
+	blog.Info["Url"]="http://localhost:9999"
 
 	err:=blog.Build()
 	if (err!=nil){

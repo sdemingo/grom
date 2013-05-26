@@ -252,7 +252,7 @@ func (blog *Blog)AddStaticPage(title string)(error){
 
 
 func (blog *Blog)Serve()(error){
-	http.ListenAndServe(":6666", http.FileServer(http.Dir(blog.Dir)))
+	http.ListenAndServe(":9999", http.FileServer(http.Dir(blog.Dir)))
 	return nil
 }
 
