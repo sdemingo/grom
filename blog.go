@@ -33,8 +33,6 @@ import (
 	"image"
 	"errors"
 	"io"
-	"time"
-	"regexp"
 	"net/http"
 	"strconv"
 )
@@ -76,9 +74,6 @@ type Blog struct{
 
 
 type BlogInfo map[string]string
-
-
-type GromConfig map[string]string
 
 
 
@@ -189,6 +184,9 @@ func (blog *Blog) loadAllPosts()(error){
 			return errors.New("Error parsing "+posts[i])
 		}
 		if (a!=nil) && (strings.HasSuffix(posts[i],".org")) {
+			/*
+			 Array limits not controlled
+			 */
 			blog.Posts[i]=a
 			if a.Date.Year()>=2000 {
 				blog.Years[a.Date.Year()-2000]=true
@@ -201,6 +199,9 @@ func (blog *Blog) loadAllPosts()(error){
 
 	return err
 }
+
+
+
 
 func (blog *Blog) loadAllStatics()(error){
 	fd,err:=os.Open(blog.Dir+"static")
@@ -216,6 +217,9 @@ func (blog *Blog) loadAllStatics()(error){
 			return errors.New("Error parsing "+statics[i])
 		}
 		if (a!=nil) && (strings.HasSuffix(statics[i],".org")){
+			/*
+			 Array limits not controlled
+			 */
 			blog.Statics[i]=a
 			blog.Nstatics++
 		}
@@ -259,6 +263,8 @@ func (blog *Blog)Serve()(error){
 
 
 func (blog *Blog)Build()(error){
+
+	fmt.Printf("Buiding posts ... ")
 	for i:=range blog.Posts{
 		a:=blog.Posts[i]
 		if (a!=nil){
@@ -268,7 +274,9 @@ func (blog *Blog)Build()(error){
 			}
 		}
 	}
+	fmt.Printf("\n")
 
+	fmt.Printf("Buiding statics ... ")
 	for i:=range blog.Statics{
 		a:=blog.Statics[i]
 		if (a!=nil){
@@ -278,42 +286,63 @@ func (blog *Blog)Build()(error){
 			}
 		}
 	}
+	fmt.Printf("\n")
 	
+	fmt.Printf("Buiding index ... ")
 	err:=blog.makeIndex()
 	if err!=nil{
 		return err
 	}
+	fmt.Printf("\n")
 
+	fmt.Printf("Buiding archive ... ")
 	err=blog.makeArchive()
 	if err!=nil{
 		return err
 	}
+	fmt.Printf("\n")
 
+	fmt.Printf("Buiding tags ... ")
+	err=blog.makeTags()
+	if err!=nil{
+		return err
+	}
+	fmt.Printf("\n")
+
+
+	fmt.Printf("Buiding images and thumbs ... ")
 	err=blog.makeThumbs()
 	if err!=nil{
 		return err
 	}
+	fmt.Printf("\n")
 
-	err=blog.makeSitemap()
+	fmt.Printf("Buiding blog utils ... ")
+	err=blog.BuildUtils()
+	if err!=nil{
+		return err
+	}
+	fmt.Printf("\n")
+
+	return nil
+}
+
+
+
+func (blog *Blog) BuildUtils()(error){
+	
+	err:=makeSitemap(blog)
 	if err!=nil{
 		return err
 	}
 
-/*
-	err=blog.makeAtomFeed()
-	if err!=nil{
-		return err
-	}
-*/
-
-	err=blog.makeRSSFeed()
+	err=makeRSSFeed(blog)
 	if err!=nil{
 		return err
 	}
 
 	return nil
 }
-
 
 
 func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
@@ -380,9 +409,9 @@ func (blog *Blog)GetSelectedStatic()(*Article){
 }
 
 
-
-
-
+func (blog *Blog) GetHTMLContent(a *Article)(string){
+	return Org2HTML(a.Content,blog.Info["Url"])
+}
 
 
 
@@ -406,6 +435,8 @@ func (s ByDate) Less(i, j int) bool {
 	}
 	return s.Articles[i].Date.After(s.Articles[j].Date)
 }
+
+
 
 
 
@@ -508,6 +539,15 @@ func (blog *Blog) makeArticle(a *Article)(error){
 
 
 
+func (blog *Blog) makeTags()(error){
+
+	//TODO
+	//return buildTags(blog)
+
+	return nil
+}
+
+
 func (blog *Blog)makeArchive()(error){
 
 	f,err:=os.Create(blog.Dir+"html/archive.html")
@@ -578,247 +618,3 @@ func (blog *Blog)createThumb(file string)(error){
 
 	return nil
 }
-
-
-
-/*
- Sitemap generator
-*/
-
-var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{{$b:=.}}
-{{ range $a:=.Posts}}
-  <url>
-      <loc>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</loc>
-      <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
-      <changefreq>monthly</changefreq>
-      <priority>0.8</priority>
-   </url>
-{{end}}
-{{ range $a:=.Statics}}
-  <url>
-      <loc>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</loc>
-      <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
-      <changefreq>monthly</changefreq>
-      <priority>0.8</priority>
-   </url>
-</urlset>
-{{end}}
-{{end}}
-`
-
-func (blog *Blog)makeSitemap()(error){
-	f,err:=os.Create(blog.Dir+"sitemap.xml")
-	if err!=nil{
-		return err
-	}
-
-	t:=template.New("sitemap")
-	_,err=t.Parse(sitemapTemplate)
-	if (err!=nil){
-		return err
-	}
-
-	err=t.ExecuteTemplate(f,"sitemap",blog)
-	if (err!=nil){
-		return err
-	}
-
-	return nil
-}
-
-
-
-
-
-var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-<id>{{.Info.Url}}/atom.xml</id>
-<title>{{.Info.Name}}</title>
-<subtitle>{{.Info.Subtitle}}</subtitle>
-<link href="{{.Info.Url}}/atom.xml" rel="self" />
-<link href="{{.Info.Url}}" />
-<updated>{{.GetFeedDate}}</updated>
-{{$b:=.}}
-{{ range $a:=.Posts}}
-
-<entry>
-<title>{{$a.Title}}</title>
-<link href="{{$b.Info.Url}}/html/{{$b.GetArticleId $a}}.html" />
-<id>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</id>
-<updated>{{$a.DateFormat.AtomDateFormat}}</updated>
-<author>
-<name>{{$a.Meta.Author}}</name>
-</author>
-<description><![CDATA[{{$b.GetHTMLContent $a}}]]></description>
-</entry>
-
-{{end}}
-</feed>
-{{end}}
-`
-
-var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
-<rss version="2.0">
-<channel>
-<title>{{.Info.Name}}</title>
-<link>{{.Info.Url}}</link>
-<description>{{.Info.Subtitle}}</description>
-{{$b:=.}}
-{{ range $a:=.Posts}}
-<item>
-<title>{{$a.Title}}</title>
-<pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
-<guid>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</guid>
-<link>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</link>
-<description><![CDATA[{{$b.GetHTMLContent $a}}]]></description>
-</item>
-{{end}}
-</channel>
-</rss>
-{{end}}
-`
-
-
-func (blog *Blog)GetFeedDate()(string){
-	t:=time.Now()
-	return t.Format(AtomDateFormat)
-}
-
-
-func (blog *Blog)makeAtomFeed()(error){
-	f,err:=os.Create(blog.Dir+"atom.xml")
-	if err!=nil{
-		return err
-	}
-
-	t:=template.New("atom")
-	_,err=t.Parse(atomTemplate)
-	if (err!=nil){
-		return err
-	}
-
-	err=t.ExecuteTemplate(f,"atom",blog)
-	if (err!=nil){
-		return err
-	}
-
-	return nil
-}
-
-
-func (blog *Blog)makeRSSFeed()(error){
-	f,err:=os.Create(blog.Dir+"rss.xml")
-	if err!=nil{
-		return err
-	}
-
-	t:=template.New("rss")
-	_,err=t.Parse(rssTemplate)
-	if (err!=nil){
-		return err
-	}
-
-	err=t.ExecuteTemplate(f,"rss",blog)
-	if (err!=nil){
-		return err
-	}
-
-	return nil
-}
-
-
-
-
-
-
-/*
- HTML conversion
-*/
-
-var head1Reg = regexp.MustCompile("(?m)^\\* (?P<head>.+)\\n")
-var head2Reg = regexp.MustCompile("(?m)^\\*\\* (?P<head>.+)\\n")
-var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[^\\]]+)\\]\\]")
-var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\[file:\\.\\./img/(?P<thumb>[^\\]]+)\\]\\]")
-var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
-var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s).+)^\\#\\+END_SRC\\n")
-var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
-var centerReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_CENTER\\s*\\n(?P<cite>(?s).+)^\\#\\+END_CENTER\\n")
-var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
-var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
-var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
-
-//estilos de texto
-var boldReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)\\*(?P<text>[^\\s][^\\*]+)\\*(?P<suffix>[\\s|\\W]*)")
-var italicReg = regexp.MustCompile("(?P<prefix>[\\s])/(?P<text>[^\\s][^/]+)/(?P<suffix>[^A-Za-z0-9]*)")
-var ulineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)_(?P<text>[^\\s][^_]+)_(?P<suffix>[\\s|\\W]*)")
-var codeLineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)=(?P<text>[^\\s][^\\=]+)=(?P<suffix>[\\s|\\W]*)")
-var strikeReg = regexp.MustCompile("(?P<prefix>[\\s|[\\W]+)\\+(?P<text>[^\\s][^\\+]+)\\+(?P<suffix>[\\s|\\W]*)")
-
-
-// listas
-var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s+(?P<item>.+)\\n")
-var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s+(?P<item>.+)\\n")
-var ulistReg = regexp.MustCompile("(?P<items>(\\<fake-uli\\>.+\\n)+)")
-var olistReg = regexp.MustCompile("(?P<items>(\\<fake-oli\\>.+\\n)+)")
-
-
-
-
-func (blog *Blog) GetHTMLContent(a *Article)(string){
-	content:=a.Content
-	
-	var url string
-	var ok bool
-
-	if url,ok=blog.Info["Url"]; !ok {
-		panic(errors.New("No url defined in config.json"))
-	}
-
-
-	// First remove all HTML raw tags for security
-	out:=rawHTML.ReplaceAll(content,[]byte(""))
-
-	// headings (h1 is not admit in the post body)
-	out=head1Reg.ReplaceAll(out,[]byte(""))
-	out=head2Reg.ReplaceAll(out,[]byte("<h2>$head</h2>\n"))
-
-
-	// images and blocks
-	out=imgReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$src'><img src='"+url+"/img/thumbs/$src'/></a></div>"))
-	out=imgLinkReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$img'><img src='"+url+"/img/thumbs/$thumb'/></a></div>"))
-	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
-	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
-	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
-	out=centerReg.ReplaceAll(out,[]byte("<center>$cite</center>\n"))
-	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
-	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
-
-
-	// font styles
-	out=italicReg.ReplaceAll(out,[]byte("$prefix<i>$text</i>$suffix"))
-	out=boldReg.ReplaceAll(out,[]byte("$prefix<b>$text</b>$suffix"))
-	out=ulineReg.ReplaceAll(out,[]byte("$prefix<u>$text</u>$suffix"))
-	out=codeLineReg.ReplaceAll(out,[]byte("$prefix<code>$text</code>$suffix"))
-	out=strikeReg.ReplaceAll(out,[]byte("$prefix<s>$text</s>$suffix"))
-
-
-	// List with fake tags for items
-	out=ulistItemReg.ReplaceAll(out,[]byte("<fake-uli>$item</fake-uli>\n"))
-	out=ulistReg.ReplaceAll(out,[]byte("<ul>\n$items</ul>\n"))
-	out=olistItemReg.ReplaceAll(out,[]byte("<fake-oli>$item</fake-oli>\n"))
-	out=olistReg.ReplaceAll(out,[]byte("<ol>\n$items</ol>\n"))
-
-	// Removing fake items tags
-	sout:=string(out)
-	sout=strings.Replace(sout,"<fake-uli>","<li>",-1)
-	sout=strings.Replace(sout,"</fake-uli>","</li>",-1)
-	sout=strings.Replace(sout,"<fake-oli>","<li>",-1)
-	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
-	
-	return sout
-
-
-}
-

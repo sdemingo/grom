@@ -40,6 +40,7 @@ type Article struct{
 }
 
 
+
 var checkID = regexp.MustCompile("[^(\\w|\\.)]")
 
 
@@ -66,6 +67,7 @@ func NewArticle(id string)(*Article,error){
 	a.Meta["Id"]=a.Id
 	a.Meta["Date"]=date2String(a.Date)
 	a.Meta["Author"]="Sergio de Mingo"
+	a.Meta["Tags"]=""
 
 	return a,nil
 }
@@ -84,6 +86,7 @@ func ParseArticle(ifile string)(*Article,error){
 	a.Meta["Id"]=parseProperty(a.Content,"Id")
 	a.Meta["Date"]=parseProperty(a.Content,"Date")
 	a.Meta["Author"]=parseProperty(a.Content,"Author")
+	a.Meta["Tags"]=parseProperty(a.Content,"Tags")
 	a.Date,err=parseDate(a.Meta["Date"])
 	if err!=nil {
 		return nil,errors.New("Article with corrupted date")
