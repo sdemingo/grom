@@ -22,6 +22,7 @@ package main
 
 
 import (
+	//"fmt"
 	"strings"
 	"regexp"
 	"strconv"
@@ -42,9 +43,17 @@ var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\
 var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
 
 var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s)[^\\#]+)^\\#\\+END_SRC\\n")
+var codeHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n")
+var codeFooterReg = regexp.MustCompile("(?m)^\\#\\+END_SRC\\n")
 
-var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
-var centerReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_CENTER\\s*\\n(?P<cite>(?s).+)^\\#\\+END_CENTER\\n")
+var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s)[^\\#]+)^\\#\\+END_QUOTE\\n")
+var quoteHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n")
+var quoteFooterReg = regexp.MustCompile("(?m)^\\#\\+END_QUOTE\\n")
+
+var centerReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_CENTER\\s*\\n(?P<cite>(?s)[^\\#]+)^\\#\\+END_CENTER\\n")
+var centerHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_CENTER\\s*\\n")
+var centerFooterReg = regexp.MustCompile("(?m)^\\#\\+END_CENTER\\n")
+
 var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
 var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
 var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
@@ -83,19 +92,18 @@ func Org2HTML(content []byte,url string)(string){
 
 
 	// Extract blocks codes
-	codeBlocks:=codeReg.FindAll(out,-1)
-	for i:=range codeBlocks{
-		var codeHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n")
-		var codeFooterReg = regexp.MustCompile("(?m)^\\#\\+END_SRC\\n")
+	codeBlocks,out:=extractBlocks(string(out),
+		codeReg,
+		codeHeaderReg,
+		codeFooterReg,
+		"code")
 
-		codeString:=string(codeBlocks[i])
-		codeBlocks[i]=codeHeaderReg.ReplaceAll(codeBlocks[i],[]byte("\n"))
-		codeBlocks[i]=codeFooterReg.ReplaceAll(codeBlocks[i],[]byte("\n"))
-		out=[]byte(strings.Replace(string(out),codeString,"<pre><code>blockcode:"+strconv.Itoa(i)+"</code></pre>\n",1))
-	}
+	quoteBlocks,out:=extractBlocks(string(out),
+		quoteReg,
+		quoteHeaderReg,
+		quoteFooterReg,
+		"quote")
 
-
-	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
 	out=centerReg.ReplaceAll(out,[]byte("<center>$cite</center>\n"))
 	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
 	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
@@ -123,15 +131,37 @@ func Org2HTML(content []byte,url string)(string){
 	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
 
 
+
 	// Reinsert block codes
-	for i:=range codeBlocks{
-		codeString:=string(codeBlocks[i])
-		sout=strings.Replace(sout,"<pre><code>blockcode:"+strconv.Itoa(i)+"</code></pre>\n",
-			"<pre><code>"+codeString+"</code></pre>\n",1)
-	}
-	
+	sout=insertBlocks(sout,codeBlocks,"<pre><code>","</code></pre>","code")
+	sout=insertBlocks(sout,quoteBlocks,"<blockquote>","</blockquote>","quote")
+
 	return sout
-
-
 }
 
+
+
+func extractBlocks(src string,fullReg,headerReg,footerReg *regexp.Regexp,name string)([][]byte,[]byte){
+	out:=[]byte(src)
+	blocks:=fullReg.FindAll(out,-1)
+	for i:=range blocks{
+		bstring:=string(blocks[i])
+		blocks[i]=headerReg.ReplaceAll(blocks[i],[]byte("\n"))
+		blocks[i]=footerReg.ReplaceAll(blocks[i],[]byte("\n"))
+		out=[]byte(strings.Replace(string(out),bstring,"block"+name+":"+strconv.Itoa(i)+"\n",1))
+	}
+
+	return blocks,out
+}
+
+
+func insertBlocks(src string,blocks [][]byte,header,footer,name string)(string){
+	s:=src
+	for i:=range blocks{
+		bstring:=string(blocks[i])
+		s=strings.Replace(s,"block"+name+":"+strconv.Itoa(i)+"\n",
+			header+bstring+footer+"\n",1)
+	}
+
+	return s
+}
