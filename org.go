@@ -22,25 +22,10 @@ package main
 
 
 import (
-	//"fmt"
-	//"os"
-	//"encoding/json"
-	//"io/ioutil"
-	//"text/template"
-	//"sort"
 	"strings"
-	//"image/jpeg"
-	//"image"
-	//"errors"
-	//"io"
-	//"time"
 	"regexp"
-	//"net/http"
-	//"strconv"
+	"strconv"
 )
-
-
-
 
 
 
@@ -55,7 +40,9 @@ var head2Reg = regexp.MustCompile("(?m)^\\*\\* (?P<head>.+)\\n")
 var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[^\\]]+)\\]\\]")
 var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\[file:\\.\\./img/(?P<thumb>[^\\]]+)\\]\\]")
 var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
-var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s).+)^\\#\\+END_SRC\\n")
+
+var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s)[^\\#]+)^\\#\\+END_SRC\\n")
+
 var quoteReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_QUOTE\\s*\\n(?P<cite>(?s).+)^\\#\\+END_QUOTE\\n")
 var centerReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_CENTER\\s*\\n(?P<cite>(?s).+)^\\#\\+END_CENTER\\n")
 var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
@@ -80,14 +67,6 @@ var olistReg = regexp.MustCompile("(?P<items>(\\<fake-oli\\>.+\\n)+)")
 
 
 func Org2HTML(content []byte,url string)(string){
-/*
-	content:=a.Content	
-	var url string
-	var ok bool
-	if url,ok=blog.Info["Url"]; !ok {
-		panic(errors.New("No url defined in config.json"))
-	}
-*/
 
 
 	// First remove all HTML raw tags for security
@@ -97,12 +76,25 @@ func Org2HTML(content []byte,url string)(string){
 	out=head1Reg.ReplaceAll(out,[]byte(""))
 	out=head2Reg.ReplaceAll(out,[]byte("<h2>$head</h2>\n"))
 
-
-	// images and blocks
+	// images
 	out=imgReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$src'><img src='"+url+"/img/thumbs/$src'/></a></div>"))
 	out=imgLinkReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$img'><img src='"+url+"/img/thumbs/$thumb'/></a></div>"))
 	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
-	out=codeReg.ReplaceAll(out,[]byte("<pre><code>$code</code></pre>\n"))
+
+
+	// Extract blocks codes
+	codeBlocks:=codeReg.FindAll(out,-1)
+	for i:=range codeBlocks{
+		var codeHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n")
+		var codeFooterReg = regexp.MustCompile("(?m)^\\#\\+END_SRC\\n")
+
+		codeString:=string(codeBlocks[i])
+		codeBlocks[i]=codeHeaderReg.ReplaceAll(codeBlocks[i],[]byte("\n"))
+		codeBlocks[i]=codeFooterReg.ReplaceAll(codeBlocks[i],[]byte("\n"))
+		out=[]byte(strings.Replace(string(out),codeString,"<pre><code>blockcode:"+strconv.Itoa(i)+"</code></pre>\n",1))
+	}
+
+
 	out=quoteReg.ReplaceAll(out,[]byte("<blockquote>$cite</blockquote>\n"))
 	out=centerReg.ReplaceAll(out,[]byte("<center>$cite</center>\n"))
 	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
@@ -129,6 +121,14 @@ func Org2HTML(content []byte,url string)(string){
 	sout=strings.Replace(sout,"</fake-uli>","</li>",-1)
 	sout=strings.Replace(sout,"<fake-oli>","<li>",-1)
 	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
+
+
+	// Reinsert block codes
+	for i:=range codeBlocks{
+		codeString:=string(codeBlocks[i])
+		sout=strings.Replace(sout,"<pre><code>blockcode:"+strconv.Itoa(i)+"</code></pre>\n",
+			"<pre><code>"+codeString+"</code></pre>\n",1)
+	}
 	
 	return sout
 
