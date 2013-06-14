@@ -123,14 +123,19 @@ func buildTags(blog *Blog)(error){
 			for t:=0;t<len(names);t++{
 				var tag Tag
 				var ok bool
-				if tag,ok=blog.BlogTags[names[t]];!ok {
-					tag.Name=names[t]
+				name:=strings.Trim(names[t]," ")
+				n_name:=normalizeURL(name)
+				if ((name=="") || (n_name=="")){
+					continue
+				}
+				if tag,ok=blog.BlogTags[n_name];!ok {
+					tag.Name=name
 					tag.Posts=make([]*Article,0)	
 					tag.Nposts=0
 				}
 				tag.Posts=append(tag.Posts,blog.Posts[i])
 				tag.Nposts++
-				blog.BlogTags[normalizeURL(names[t])]=tag
+				blog.BlogTags[n_name]=tag
 			}
 		}
 	}
