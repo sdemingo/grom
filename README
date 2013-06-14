@@ -1,15 +1,14 @@
-
 *) What is Grom?
 
 Grom is small static web content generator based on org-mode
 syntax. The Org-mode is a major mode for Emacs created by Carsten
 Dominik. Grom only support a subset of org-mode syntax. With Grom you
 can create all contents for your website or your blog with this syntax
-and Grom export it to HTML and build the site. You can get a short
+and Grom exports them to HTML and builds the site. You can get a short
 review about org-mode syntax at http://orgmode.org/orgguide.pdf
 
-Grom is written in Go and if you want build the binary you need to
-have the Go environment. You can download it from http://golang.org
+Grom is written in Go and if you want to build the binary you need to
+have the Go environment installed. Get it from http://golang.org
 
 
 *) Quick start
@@ -25,7 +24,7 @@ You can run a builtin web service on grom to test the sample blog:
 
 Now, open your browse and write the next link in the address bar:
 
-     http://localhost:6666
+     http://localhost:9999
 
 
 
