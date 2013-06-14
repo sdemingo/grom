@@ -266,6 +266,13 @@ func (blog *Blog)Serve()(error){
 
 func (blog *Blog)Build()(error){
 
+	fmt.Printf("Buiding tags ... ")
+	err:=blog.makeTags()
+	if err!=nil{
+		return err
+	}
+	fmt.Printf("\n")
+
 	fmt.Printf("Buiding posts ... ")
 	for i:=range blog.Posts{
 		a:=blog.Posts[i]
@@ -291,7 +298,7 @@ func (blog *Blog)Build()(error){
 	fmt.Printf("\n")
 	
 	fmt.Printf("Buiding index ... ")
-	err:=blog.makeIndex()
+	err=blog.makeIndex()
 	if err!=nil{
 		return err
 	}
@@ -303,14 +310,6 @@ func (blog *Blog)Build()(error){
 		return err
 	}
 	fmt.Printf("\n")
-
-	fmt.Printf("Buiding tags ... ")
-	err=blog.makeTags()
-	if err!=nil{
-		return err
-	}
-	fmt.Printf("\n")
-
 
 	fmt.Printf("Buiding images and thumbs ... ")
 	err=blog.makeThumbs()
