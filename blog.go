@@ -70,6 +70,8 @@ type Blog struct{
 	Years []bool
 	Months []string
 	Selected int
+	BlogTags Tags
+	TagSelected Tag
 }
 
 
@@ -541,10 +543,7 @@ func (blog *Blog) makeArticle(a *Article)(error){
 
 func (blog *Blog) makeTags()(error){
 
-	//TODO
-	//return buildTags(blog)
-
-	return nil
+	return buildTags(blog)
 }
 
 

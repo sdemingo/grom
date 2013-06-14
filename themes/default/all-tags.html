@@ -1,0 +1,9 @@
+{{define "body"}}
+{{$b:=.}}
+<h1>Etiquetas</h1>
+<ul>
+{{ range $u,$t:=$b.BlogTags}}
+    <li><a href="{{$b.Info.Url}}/tags/{{$u}}.html">{{$t.Name}}</a>
+{{end}}
+</ul>
+{{end}}

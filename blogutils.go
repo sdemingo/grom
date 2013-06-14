@@ -22,10 +22,130 @@ package main
 
 
 import (
+	//"fmt"
 	"os"
 	"text/template"
 	"time"
+	"regexp"
+	"strings"
 )
+
+
+
+
+type Tag struct{
+	Name string
+	Posts Articles
+	Nposts int
+}
+
+
+type Tags map[string] Tag
+
+
+
+func (t Tag) getValidId()(string){
+	return normalizeURL(t.Name)
+}
+
+
+func normalizeURL(url string)(string){
+	urlReg:=regexp.MustCompile("[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\-_]+")
+	if urlReg.MatchString(url) {
+		return ""
+	}
+	s:=url
+	s=strings.Replace(s,"ñ","n",-1)
+	s=strings.Replace(s,"á","a",-1)
+	s=strings.Replace(s,"é","e",-1)
+	s=strings.Replace(s,"í","i",-1)
+	s=strings.Replace(s,"ó","o",-1)
+	s=strings.Replace(s,"ú","u",-1)
+	return s
+}
+
+
+func (t Tag)makeTagIndex(blog *Blog)(error){
+	f,err:=os.Create(blog.Dir+"/tags/"+t.getValidId()+".html")
+	if err!=nil{
+		return err
+	}
+
+	blog.TagSelected=t
+
+	tmpl:=template.New("main")
+	_,err=tmpl.ParseFiles(blog.ThemeDir+"/main.html",
+		blog.ThemeDir+"/tag-index.html")
+	if (err!=nil){
+		return err
+	}
+
+	err=tmpl.ExecuteTemplate(f,"main",blog)
+	if (err!=nil){
+		return err
+	}
+
+	return nil
+}
+
+
+func makeAllTagsIndex(blog *Blog)(error){
+	f,err:=os.Create(blog.Dir+"/tags/index.html")
+	if err!=nil{
+		return err
+	}
+
+	tmpl:=template.New("main")
+	_,err=tmpl.ParseFiles(blog.ThemeDir+"/main.html",
+		blog.ThemeDir+"/all-tags.html")
+	if (err!=nil){
+		return err
+	}
+
+	err=tmpl.ExecuteTemplate(f,"main",blog)
+	if (err!=nil){
+		return err
+	}
+
+	return nil
+}
+
+
+
+func buildTags(blog *Blog)(error){
+
+	blog.BlogTags=make(Tags)
+
+	for i:=range blog.Posts{
+		a:=blog.Posts[i]
+		if (a!=nil){
+			names:=strings.Split(blog.Posts[i].Meta["Tags"],",")
+			for t:=0;t<len(names);t++{
+				var tag Tag
+				var ok bool
+				if tag,ok=blog.BlogTags[names[t]];!ok {
+					tag.Name=names[t]
+					tag.Posts=make([]*Article,0)	
+					tag.Nposts=0
+				}
+				tag.Posts=append(tag.Posts,blog.Posts[i])
+				tag.Nposts++
+				blog.BlogTags[normalizeURL(names[t])]=tag
+			}
+		}
+	}
+
+	for _,v:=range blog.BlogTags{
+		err:=v.makeTagIndex(blog)
+		if err!=nil{
+			return err
+		}
+	}
+
+	makeAllTagsIndex(blog)
+
+	return nil
+}
 
 
 
@@ -64,7 +184,7 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 <link href="{{.Info.Url}}" />
 <updated>{{.GetFeedDate}}</updated>
 {{$b:=.}}
-{{ range $a:=.Posts}}
+{{ range $a:=.GetLastArticles}}
 
 <entry>
 <title>{{$a.Title}}</title>
@@ -89,7 +209,7 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 <link>{{.Info.Url}}</link>
 <description>{{.Info.Subtitle}}</description>
 {{$b:=.}}
-{{ range $a:=.Posts}}
+{{ range $a:=.GetLastArticles}}
 <item>
 <title>{{$a.Title}}</title>
 <pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
