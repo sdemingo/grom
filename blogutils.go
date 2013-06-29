@@ -31,7 +31,9 @@ import (
 )
 
 
-
+const (
+	LAST_TAGS_TO_SHOW=4
+)
 
 type Tag struct{
 	Name string
@@ -140,6 +142,16 @@ func buildTags(blog *Blog)(error){
 		}
 	}
 
+	blog.LastBlogTags=make(Tags)
+	i:=0
+	for k,v:=range blog.BlogTags{
+		blog.LastBlogTags[k]=v
+		i++
+		if i==LAST_TAGS_TO_SHOW{
+			break
+		}
+	}
+
 	for _,v:=range blog.BlogTags{
 		err:=v.makeTagIndex(blog)
 		if err!=nil{
@@ -151,6 +163,7 @@ func buildTags(blog *Blog)(error){
 
 	return nil
 }
+
 
 
 

@@ -70,7 +70,8 @@ type Blog struct{
 	Years []bool
 	Months []string
 	Selected int
-	BlogTags Tags
+	BlogTags Tags       //all tags
+	LastBlogTags Tags   //last tags updated
 	TagSelected Tag
 }
 
