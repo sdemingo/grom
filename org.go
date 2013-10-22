@@ -56,7 +56,7 @@ var centerFooterReg = regexp.MustCompile("(?m)^\\#\\+END_CENTER\\n")
 
 var parReg = regexp.MustCompile("\\n\\n+(?P<text>[^\\n]+)")
 var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
-var rawHTML = regexp.MustCompile("\\<[^\\>]+\\>")
+var rawHTML = regexp.MustCompile("\\<A-Za-z[^\\>]+\\>")
 
 //estilos de texto
 var boldReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)\\*(?P<text>[^\\s][^\\*]+)\\*(?P<suffix>[\\s|\\W]*)")
