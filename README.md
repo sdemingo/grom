@@ -18,20 +18,16 @@ Quick start
 You can create your first blog site with Grom building the sample site
 which is included in the distribution. Type this on the command line:
 
-```
       $ grom build sample-blog
-```
+
 You can run a builtin web service on grom to test the sample blog:
 
-```
       $ grom serve sample-blog
-```
 
 Now, open your browse and write the next link in the address bar:
 
-```
      http://localhost:9999
-```
+
 
 
 
@@ -40,19 +36,15 @@ Create a new site
 
 You can create a new site writting the next command.
 
-```
-    $ grom create <grom-dir> <site-dir>
-```
+    grom create <grom-dir> <site-dir>
 
 Where <grom-dir> is the directory where grom was installed and
 <site-dir> is the directory of the new blog.
 
 Now you can add a new post or a new static page using: 
-  
-``` 
-    $ grom add-post <site-dir> <post-name>	   
-    $ grom add-static <site-dir> <static-page-name>	
-```
+    
+    grom add-post <site-dir> <post-name>	   
+    grom add-static <site-dir> <static-page-name>	
 
 To edit your new files you have open your text editor and load your
 file from <site-dir>/posts or <site-dir>/static.
@@ -60,9 +52,8 @@ file from <site-dir>/posts or <site-dir>/static.
 
 Finally, to build all the blog and test like before with sample-blog:
 
-```
-    $ grom build <site-dir>
-    $ grom serve <site-dir>
-```
+    grom build <site-dir>
+    grom serve <site-dir>
+
 
 
