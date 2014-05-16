@@ -74,7 +74,7 @@ func create_post(args []string){
 
 	err:=blog.AddArticle(title)
 	if err!=nil{
-		fmt.Printf("Post not created: %s\n",err)
+		fmt.Printf("Post not created: %s\n",err.Error())
 	}else{
 		fmt.Printf("Post created\n")
 	}
@@ -99,7 +99,7 @@ func create_static(args []string){
 
 	err:=blog.AddStaticPage(title)
 	if err!=nil{
-		fmt.Printf("Page not created: %s\n",err)
+		fmt.Printf("Page not created: %s\n",err.Error())
 	}else{
 		fmt.Printf("Page created\n")
 	}
