@@ -214,39 +214,10 @@ func (blog *Blog) loadAllPosts(){
 	if err!=nil{
 		fmt.Println(err)
 	}
-	sort.Sort(ByDate{blog.Posts})
 	blog.Posts=blog.Posts[:blog.Nposts]
-}
-
-
-/*
-func (blog *Blog) loadAllPosts()(error){
-	fd,err:=os.Open(blog.Dir+"post")
-	if err!=nil {
-		return err
-	}
-	posts,_:=fd.Readdirnames(-1)
-	blog.Posts=make ([]*Article,len(posts))
-	blog.Nposts=0
-	for i:=range posts{
-		a,_:=ParseArticle(blog.Dir+"post/"+posts[i])
-		if a==nil{
-			return errors.New("Error parsing "+posts[i])
-		}
-		if (a!=nil) && (strings.HasSuffix(posts[i],".org")) {
-			blog.Posts[i]=a
-			if a.Date.Year()>=2000 {
-				blog.Years[a.Date.Year()-2000]=true
-			}
-			blog.Nposts++
-		}
-		
-	}
 	sort.Sort(ByDate{blog.Posts})
 
-	return err
 }
-*/
 
 
 
@@ -590,6 +561,8 @@ func (blog *Blog) makeArticle(a *Article)(error){
 	}
 
 	t.ExecuteTemplate(f,"main",blog)
+
+
 
 	return nil
 }
