@@ -11,7 +11,7 @@
 	    <ul>
 	    {{ range $a:=$am}}
 		{{if $a}}
-		    <li><a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html">{{$a.Title}}</a>
+		    <li><a href="{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html">{{$a.Title}}</a>
 		{{end}}
 	    {{end}}
 	    </ul>

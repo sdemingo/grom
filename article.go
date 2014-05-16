@@ -109,10 +109,18 @@ func (a *Article)GetValidId()(string){
 		return ""
 	}
 	d:=a.GetDate()
-	ds:=d.Format("2006-01")
+	ds:=d.Format("01")
 	return ds+"-"+a.Id
 }
 
+func (a *Article)GetYear()(string){
+	if a==nil {
+		return ""
+	}
+	d:=a.GetDate()
+	ds:=d.Format("2006")
+	return ds
+}
 
 
 func (a *Article) GetDate()(time.Time){

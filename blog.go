@@ -351,16 +351,19 @@ func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
 
 	a:=make([]*Article,100)
 	n:=0
-	date:=""
+	smonth:=""
 	year=year+2000
+	syear:=fmt.Sprintf("%d",year)
 	if (month<10){
-		date=fmt.Sprintf("%d-0%d",year,month)
+		smonth=fmt.Sprintf("0%d",month)
 	}else{
-		date=fmt.Sprintf("%d-%d",year,month)
+		smonth=fmt.Sprintf("%d",month)
 	}
 
 	for p:=0;p<blog.Nposts;p++{
-		if strings.HasPrefix(blog.Posts[p].GetValidId(), date){
+		if (blog.Posts[p].GetYear()==syear) &&
+			strings.HasPrefix(blog.Posts[p].GetValidId(), smonth){
+			
 			a=append(a,blog.Posts[p])
 			n++
 		}
@@ -506,7 +509,11 @@ func (blog *Blog) makeStatic(a *Article)(error){
 
 func (blog *Blog) makeArticle(a *Article)(error){
 	
-	f,err:=os.Create(blog.Dir+"html/"+a.GetValidId()+".html")
+	err:=os.MkdirAll(blog.Dir+"html/"+a.GetYear(),0755)
+	if err!=nil{
+		return err
+	}
+	f,err:=os.Create(blog.Dir+"html/"+a.GetYear()+"/"+a.GetValidId()+".html")
 	if err!=nil{
 		return err
 	}

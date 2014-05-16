@@ -4,7 +4,7 @@
 <h1>Artículos sobre {{$t.Name}}</h1>
 <ul>
 {{ range $a:=$t.Posts}}
-    <li><a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html">{{$a.Title}}</a>
+    <li><a href="{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html">{{$a.Title}}</a>
 {{end}}
 </ul>
 {{end}}
