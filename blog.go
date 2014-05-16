@@ -615,11 +615,15 @@ func (blog *Blog)makeThumbs()(error){
 }
 
 
-func (blog *Blog)createThumb(file string)(error){
+func (blog *Blog) createThumb(file string)(error){
 
 	var img1 image.Image
 	var delta float32
 
+	_,err:=os.Stat(blog.Dir+"img/thumbs/"+file)
+	if err==nil{
+		return nil  // the thumb exits. exit
+	}
 	fimg, err := os.Open(blog.Dir+"img/"+file)	
 	img1, err = jpeg.Decode(fimg)
 	if err!=nil{
