@@ -2,7 +2,7 @@
 {{$b:=.}}
 {{ $a:=.GetSelectedStatic}}
     <div class="article-title">
-    <a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html"><h1>{{$a.Title}}</h1></a>
+    <h1>{{$a.Title}}</h1>
     </div>
     {{$b.GetHTMLContent $a}}
 {{end}}

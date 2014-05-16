@@ -2,7 +2,7 @@
 {{$b:=.}}
 {{ range $a:=.GetLastArticles}}
     <div class="article-title">
-      <a href="{{$b.Info.Url}}/html/{{$a.GetValidId}}.html"><h1>{{$a.Title}}</h1></a>
+      <a href="{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html"><h1>{{$a.Title}}</h1></a>
     <p><div class="small">{{$a.DateFormat.PostDateFormat}}
 	Por {{$a.Meta.Author}}</div>
     </div>
