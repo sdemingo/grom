@@ -1,22 +1,22 @@
 /**
 
-   Grom
+ Grom
 
-   Copyright 2013 Sergio de Mingo
+ Copyright 2013 Sergio de Mingo
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
 
-*/
+ */
 
 package main
 
@@ -35,6 +35,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"path/filepath"
 )
 
 
@@ -92,6 +93,7 @@ func CreateBlog(dir string,themes string)(*Blog,error){
 
 	b.Years=make([]bool,100)
 	b.Months=months
+	b.Posts=make ([]*Article,500)
 	b.Nposts=0
 
 	jb, err := json.MarshalIndent(b.Info," "," ")
@@ -166,6 +168,9 @@ func LoadBlog(dir string)(*Blog){
 	b.Years=make([]bool,100)
 	b.Months=months
 
+	b.Posts=make ([]*Article,500)
+	b.Nposts=0
+
 	b.loadAllPosts()
 
 	b.loadAllStatics()
@@ -173,6 +178,46 @@ func LoadBlog(dir string)(*Blog){
 }
 
 
+
+func (blog *Blog) loadFilePost(fp string, fi os.FileInfo, err error) error {
+	if err != nil {
+		fmt.Println(err)
+		return nil   
+	}
+	
+	if !!fi.IsDir() {
+		fmt.Println("directory:"+fp)
+		return nil 
+	}
+
+	if !strings.HasSuffix(fp,".org"){
+		return nil  // file is not org 
+	}
+
+	fmt.Printf("parsing %s\n",fp)
+	a,_:=ParseArticle(blog.Dir+"/"+fp)
+	if a==nil{
+		return errors.New("Error parsing "+fp)
+	}
+	
+	// Array limits not controlled 
+	blog.Posts[blog.Nposts]=a
+	blog.Nposts++
+	if a.Date.Year()>=2000 {
+		blog.Years[a.Date.Year()-2000]=true
+	}
+
+	
+	return nil
+}
+
+func (blog *Blog) loadAllPosts(){
+	filepath.Walk(blog.Dir+"post",blog.loadFilePost)
+	sort.Sort(ByDate{blog.Posts})
+}
+
+
+/*
 func (blog *Blog) loadAllPosts()(error){
 	fd,err:=os.Open(blog.Dir+"post")
 	if err!=nil {
@@ -187,9 +232,6 @@ func (blog *Blog) loadAllPosts()(error){
 			return errors.New("Error parsing "+posts[i])
 		}
 		if (a!=nil) && (strings.HasSuffix(posts[i],".org")) {
-			/*
-			 Array limits not controlled
-			 */
 			blog.Posts[i]=a
 			if a.Date.Year()>=2000 {
 				blog.Years[a.Date.Year()-2000]=true
@@ -202,7 +244,7 @@ func (blog *Blog) loadAllPosts()(error){
 
 	return err
 }
-
+*/
 
 
 
@@ -378,7 +420,7 @@ func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
 
 /*
  Here, it must be GetArticlesByTag when tags are implemented
-*/
+ */
 
 
 func (blog *Blog)GetLastArticles()([]*Article){
@@ -427,7 +469,7 @@ func (blog *Blog) GetHTMLContent(a *Article)(string){
 
 /*
  Mecanismo de ordenación de los arrays de artículos
-*/
+ */
 func (s Articles) Len() int      { return len(s) }
 func (s Articles) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
