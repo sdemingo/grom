@@ -172,12 +172,14 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {{$b:=.}}
 {{ range $a:=.Posts}}
+{{ if $a}}
   <url>
-      <loc>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</loc>
+      <loc>{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html</loc>
       <lastmod>{{$a.DateFormat.SitemapDateFormat}}</lastmod>
       <changefreq>monthly</changefreq>
       <priority>0.8</priority>
    </url>
+{{end}}
 {{end}}
 {{ range $a:=.Statics}}
   <url>
@@ -206,7 +208,7 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 
 <entry>
 <title>{{$a.Title}}</title>
-<link href="{{$b.Info.Url}}/html/{{$b.GetArticleId $a}}.html" />
+<link href="{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$b.GetArticleId $a}}.html" />
 <id>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</id>
 <updated>{{$a.DateFormat.AtomDateFormat}}</updated>
 <author>
@@ -231,8 +233,8 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 <item>
 <title>{{$a.Title}}</title>
 <pubDate>{{$a.DateFormat.RSSDateFormat}}</pubDate>
-<guid>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</guid>
-<link>{{$b.Info.Url}}/html/{{$a.GetValidId}}.html</link>
+<guid>{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html</guid>
+<link>{{$b.Info.Url}}/html/{{$a.GetYear}}/{{$a.GetValidId}}.html</link>
 <description><![CDATA[{{$b.GetHTMLContent $a}}]]></description>
 </item>
 {{end}}

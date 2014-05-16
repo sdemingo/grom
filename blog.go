@@ -23,6 +23,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"os"
 	"encoding/json"
 	"io/ioutil"
@@ -172,7 +173,6 @@ func LoadBlog(dir string)(*Blog){
 	b.Nposts=0
 
 	b.loadAllPosts()
-
 	b.loadAllStatics()
 	return b
 }
@@ -186,18 +186,16 @@ func (blog *Blog) loadFilePost(fp string, fi os.FileInfo, err error) error {
 	}
 	
 	if !!fi.IsDir() {
-		fmt.Println("directory:"+fp)
 		return nil 
 	}
 
 	if !strings.HasSuffix(fp,".org"){
 		return nil  // file is not org 
 	}
-
-	fmt.Printf("parsing %s\n",fp)
 	a,_:=ParseArticle(blog.Dir+"/"+fp)
 	if a==nil{
-		return errors.New("Error parsing "+fp)
+		fmt.Println("Error parsing "+err.Error())
+		return nil
 	}
 	
 	// Array limits not controlled 
@@ -212,8 +210,12 @@ func (blog *Blog) loadFilePost(fp string, fi os.FileInfo, err error) error {
 }
 
 func (blog *Blog) loadAllPosts(){
-	filepath.Walk(blog.Dir+"post",blog.loadFilePost)
+	err:=filepath.Walk(blog.Dir+"post",blog.loadFilePost)
+	if err!=nil{
+		fmt.Println(err)
+	}
 	sort.Sort(ByDate{blog.Posts})
+	blog.Posts=blog.Posts[:blog.Nposts]
 }
 
 
@@ -279,8 +281,12 @@ func (blog *Blog) loadAllStatics()(error){
 
 func (blog *Blog)AddArticle(title string)(error){
 
+	d:=time.Now()
+	year:=d.Format("2006")
+	month:=d.Format("01")
+
 	a,_:=NewArticle(title)
-	file:=blog.Dir+"post/"+title+".org"
+	file:=blog.Dir+"post/"+year+"/"+month+"-"+title+".org"
 	err:=a.WriteOrgFile(file)
 	if err!=nil{
 		return err
