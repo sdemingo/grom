@@ -73,7 +73,6 @@ type Blog struct{
 	Months []string
 	Selected int
 	BlogTags Tags       //all tags
-	LastBlogTags Tags   //last tags updated
 	TagSelected Tag
 }
 
@@ -366,7 +365,7 @@ func (blog *Blog) BuildUtils()(error){
 }
 
 
-func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
+func (blog *Blog) GetArticlesByDate(year int,month int)([]*Article){
 
 	a:=make([]*Article,100)
 	n:=0
@@ -395,12 +394,8 @@ func (blog *Blog)GetArticlesByDate(year int,month int)([]*Article){
 }
 
 
-/*
- Here, it must be GetArticlesByTag when tags are implemented
- */
 
-
-func (blog *Blog)GetLastArticles()([]*Article){
+func (blog *Blog) GetLastArticles()([]*Article){
 	
 	var max string
 	var ok bool
@@ -423,12 +418,12 @@ func (blog *Blog)GetLastArticles()([]*Article){
 }
 
 
-func (blog *Blog)GetSelectedPost()(*Article){
+func (blog *Blog) GetSelectedPost()(*Article){
 	return blog.Posts[blog.Selected]
 }
 
 
-func (blog *Blog)GetSelectedStatic()(*Article){
+func (blog *Blog) GetSelectedStatic()(*Article){
 	return blog.Statics[blog.Selected]
 }
 
@@ -438,6 +433,23 @@ func (blog *Blog) GetHTMLContent(a *Article)(string){
 }
 
 
+func (blog *Blog) GetPopularTags()(Tags){
+	
+	popular:=make(TagsSlice,0,len(blog.BlogTags))
+	for _,v:=range blog.BlogTags{
+		popular=append(popular,v)
+	}
+	sort.Sort(sort.Reverse(popular))
+	popular=popular[:POPULAR_TAGS_TO_SHOW]
+
+	popularMap:=make(Tags)
+	for i:=range popular{
+		n_name:=normalizeURL(popular[i].Name)
+		popularMap[n_name]=popular[i]
+	}
+
+	return popularMap
+}
 
 
 

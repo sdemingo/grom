@@ -32,7 +32,7 @@ import (
 
 
 const (
-	LAST_TAGS_TO_SHOW=4
+	POPULAR_TAGS_TO_SHOW=4
 )
 
 type Tag struct{
@@ -41,12 +41,16 @@ type Tag struct{
 	Nposts int
 }
 
-
 type Tags map[string] Tag
 
+type TagsSlice [] Tag
+
+func (t TagsSlice) Len() int { return len(t) }
+func (t TagsSlice) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t TagsSlice) Less(i, j int) bool {return t[i].Nposts < t[j].Nposts }
 
 
-func (t Tag) getValidId()(string){
+func (t *Tag) getValidId()(string){
 	return normalizeURL(t.Name)
 }
 
@@ -113,7 +117,6 @@ func makeAllTagsIndex(blog *Blog)(error){
 }
 
 
-
 func buildTags(blog *Blog)(error){
 
 	blog.BlogTags=make(Tags)
@@ -139,16 +142,6 @@ func buildTags(blog *Blog)(error){
 				tag.Nposts++
 				blog.BlogTags[n_name]=tag
 			}
-		}
-	}
-
-	blog.LastBlogTags=make(Tags)
-	i:=0
-	for k,v:=range blog.BlogTags{
-		blog.LastBlogTags[k]=v
-		i++
-		if i==LAST_TAGS_TO_SHOW{
-			break
 		}
 	}
 
