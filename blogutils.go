@@ -141,6 +141,7 @@ func buildTags(blog *Blog)(error){
 				tag.Posts=append(tag.Posts,blog.Posts[i])
 				tag.Nposts++
 				blog.BlogTags[n_name]=tag
+				a.ArticleTags[n_name]=tag
 			}
 		}
 	}

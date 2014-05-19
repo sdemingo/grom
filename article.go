@@ -36,7 +36,7 @@ type Article struct{
 	DateFormat map[string]string
 	Content []byte
 	Meta map[string]string
-
+	ArticleTags Tags
 }
 
 
@@ -61,7 +61,6 @@ func NewArticle(id string)(*Article,error){
 	a.DateFormat["RSSDateFormat"]=a.GetDateString(RSSDateFormat)
 
 	a.Id=checkID.ReplaceAllString(id,"-")
-
 
 	a.Meta=make(map[string]string)
 	a.Meta["Id"]=a.Id
@@ -98,6 +97,8 @@ func ParseArticle(ifile string)(*Article,error){
 	a.DateFormat["PostDateFormat"]=a.GetDateString(PostDateFormat)
 	a.DateFormat["SitemapDateFormat"]=a.GetDateString(OrgDateFormat)
 	a.DateFormat["RSSDateFormat"]=a.GetDateString(RSSDateFormat)
+
+	a.ArticleTags=make(Tags)
 	
 	return a,nil
 }
