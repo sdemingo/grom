@@ -285,14 +285,14 @@ func (blog *Blog)Serve()(error){
 
 func (blog *Blog)Build()(error){
 
-	fmt.Printf("Buiding tags ... ")
+	fmt.Printf("Building tags ... ")
 	err:=blog.makeTags()
 	if err!=nil{
 		return err
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("Buiding posts ... ")
+	fmt.Printf("Building posts ... ")
 	for i:=range blog.Posts{
 		a:=blog.Posts[i]
 		if (a!=nil){
@@ -304,7 +304,7 @@ func (blog *Blog)Build()(error){
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("Buiding statics ... ")
+	fmt.Printf("Building statics ... ")
 	for i:=range blog.Statics{
 		a:=blog.Statics[i]
 		if (a!=nil){
@@ -316,28 +316,28 @@ func (blog *Blog)Build()(error){
 	}
 	fmt.Printf("\n")
 	
-	fmt.Printf("Buiding index ... ")
+	fmt.Printf("Building index ... ")
 	err=blog.makeIndex()
 	if err!=nil{
 		return err
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("Buiding archive ... ")
+	fmt.Printf("Building archive ... ")
 	err=blog.makeArchive()
 	if err!=nil{
 		return err
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("Buiding images and thumbs ... ")
+	fmt.Printf("Building images and thumbs ... ")
 	err=blog.makeThumbs()
 	if err!=nil{
 		return err
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("Buiding blog utils ... ")
+	fmt.Printf("Building blog utils ... ")
 	err=blog.BuildUtils()
 	if err!=nil{
 		return err

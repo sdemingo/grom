@@ -152,7 +152,7 @@ func serve_blog(args []string){
         Remember build again before push it on production.
 `
 	fmt.Printf(warning)
-	fmt.Printf("\nServe blog on: %s\n",blog.Info["Url"])
+	fmt.Printf("\nRunning blog on %s\n",blog.Info["Url"])
 	err=blog.Serve()
 }
 
