@@ -67,7 +67,7 @@ func create_post(args []string){
 
 	pwd,_:=os.Getwd()
 	dir:=checkDirPath(pwd)
-	title:=args[2]
+	title:=args[1]
 
 	blog:=LoadBlog(dir)
 	if (blog==nil){
@@ -93,7 +93,7 @@ func create_static(args []string){
 
 	pwd,_:=os.Getwd()
 	dir:=checkDirPath(pwd)
-	title:=args[2]
+	title:=args[1]
 
 	blog:=LoadBlog(dir)
 	if (blog==nil){
