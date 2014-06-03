@@ -1,12 +1,12 @@
 What is Grom?
 =============
 
-Grom is small static web content generator based on org-mode
+Grom is a small static web content generator based on org-mode
 syntax. The Org-mode is a major mode for Emacs created by Carsten
-Dominik. Grom only support a subset of org-mode syntax. With Grom you
+Dominik. Grom only supports a subset of org-mode syntax. With Grom you
 can create all contents for your website or your blog with this syntax
-and Grom exports them to HTML and builds the site. You can get a short
-review about org-mode syntax at http://orgmode.org/orgguide.pdf
+and then Grom exports your source files to HTML building the site. 
+You can get a short review about org-mode syntax at http://orgmode.org/orgguide.pdf
 
 Grom is written in Go and if you want to build the binary you need to
 have the Go environment installed. Get it from http://golang.org
@@ -34,26 +34,23 @@ Now, open your browse and write the next link in the address bar:
 Create a new site
 =================
 
-You can create a new site writting the next command.
+You can create a new site typing the next command, the <grom-dir> is the directory where grom was installed.
 
-    grom create <grom-dir> <site-dir>
-
-Where <grom-dir> is the directory where grom was installed and
-<site-dir> is the directory of the new blog.
+    grom create <grom-dir>
 
 Now you can add a new post or a new static page using: 
     
-    grom add-post <site-dir> <post-name>	   
-    grom add-static <site-dir> <static-page-name>	
+    grom add-post  <post-name>	   
+    grom add-static <static-page-name>	
 
-To edit your new files you have open your text editor and load your
-file from <site-dir>/posts or <site-dir>/static.
+To edit your new post open your text editor and load the file 
+from <site-dir>/posts or <site-dir>/static.
 
+Finally, to build all the blog or test it before update the 
+master version you can type:
 
-Finally, to build all the blog and test like before with sample-blog:
-
-    grom build <site-dir>
-    grom serve <site-dir>
+    grom build
+    grom serve
 
 
 
