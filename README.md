@@ -16,13 +16,15 @@ Quick start
 ===========
 
 You can create your first blog site with Grom building the sample site
-which is included in the distribution. Type this on the command line:
+which is included in the distribution. Type these commands on your shell:
 
-      $ grom build sample-blog
-
+      $ cd /grom/directory
+      $ cd sample-blog
+      $ grom build
+      
 You can run a builtin web service on grom to test the sample blog:
 
-      $ grom serve sample-blog
+      $ grom serve
 
 Now, open your browse and write the next link in the address bar:
 
