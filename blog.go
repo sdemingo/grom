@@ -191,7 +191,7 @@ func (blog *Blog) loadFilePost(fp string, fi os.FileInfo, err error) error {
 	if !strings.HasSuffix(fp,".org"){
 		return nil  // file is not org 
 	}
-	a,_:=ParseArticle(blog.Dir+"/"+fp)
+	a,err:=ParseArticle(fp)
 	if a==nil{
 		fmt.Println("Error parsing "+err.Error())
 		return nil
