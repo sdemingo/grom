@@ -67,16 +67,16 @@ var strikeReg = regexp.MustCompile("(?P<prefix>[\\s|[\\W]+)\\+(?P<text>[^\\s][^\
 
 
 // listas
-var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s+(?P<item>.+)\\n")
-var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s+(?P<item>.+)\\n")
-var ulistReg = regexp.MustCompile("(?P<items>(\\<fake-uli\\>.+\\n)+)")
-var olistReg = regexp.MustCompile("(?P<items>(\\<fake-oli\\>.+\\n)+)")
+var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s+(?P<item>[^\\-|\\+]+)")
+var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s+(?P<item>[^\\-|\\+]+)")
+
+var ulistReg = regexp.MustCompile("(?P<items>(\\<uli-begin\\>[^\\<]+\\<uli-end\\>)+)")
+var olistReg = regexp.MustCompile("(?P<items>(\\<oli-begin\\>[^\\<]+\\<oli-end\\>)+)")
 
 
 
 
 func Org2HTML(content []byte,url string)(string){
-
 
 	// First remove all HTML raw tags for security
 	out:=rawHTML.ReplaceAll(content,[]byte(""))
@@ -89,7 +89,6 @@ func Org2HTML(content []byte,url string)(string){
 	out=imgReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$src'><img src='"+url+"/img/thumbs/$src'/></a></div>"))
 	out=imgLinkReg.ReplaceAll(out,[]byte("<div class='image'><a href='"+url+"/img/$img'><img src='"+url+"/img/thumbs/$thumb'/></a></div>"))
 	out=linkReg.ReplaceAll(out,[]byte("<a href='$url'>$text</a>"))
-
 
 	// Extract blocks codes
 	codeBlocks,out:=extractBlocks(string(out),
@@ -108,7 +107,6 @@ func Org2HTML(content []byte,url string)(string){
 	out=parReg.ReplaceAll(out,[]byte("\n\n<p/>$text"))
 	out=allPropsReg.ReplaceAll(out,[]byte("\n"))
 
-
 	// font styles
 	out=italicReg.ReplaceAll(out,[]byte("$prefix<i>$text</i>$suffix"))
 	out=boldReg.ReplaceAll(out,[]byte("$prefix<b>$text</b>$suffix"))
@@ -116,21 +114,18 @@ func Org2HTML(content []byte,url string)(string){
 	out=codeLineReg.ReplaceAll(out,[]byte("$prefix<code>$text</code>$suffix"))
 	out=strikeReg.ReplaceAll(out,[]byte("$prefix<s>$text</s>$suffix"))
 
-
 	// List with fake tags for items
-	out=ulistItemReg.ReplaceAll(out,[]byte("<fake-uli>$item</fake-uli>\n"))
+	out=ulistItemReg.ReplaceAll(out,[]byte("<uli-begin>$item<uli-end>"))
 	out=ulistReg.ReplaceAll(out,[]byte("<ul>\n$items</ul>\n"))
 	out=olistItemReg.ReplaceAll(out,[]byte("<fake-oli>$item</fake-oli>\n"))
 	out=olistReg.ReplaceAll(out,[]byte("<ol>\n$items</ol>\n"))
 
 	// Removing fake items tags
 	sout:=string(out)
-	sout=strings.Replace(sout,"<fake-uli>","<li>",-1)
-	sout=strings.Replace(sout,"</fake-uli>","</li>",-1)
-	sout=strings.Replace(sout,"<fake-oli>","<li>",-1)
-	sout=strings.Replace(sout,"</fake-oli>","</li>",-1)
-
-
+	sout=strings.Replace(sout,"<uli-begin>","<li>",-1)
+	sout=strings.Replace(sout,"<uli-end>","</li>\n",-1)
+	sout=strings.Replace(sout,"<oli-begin>","<li>",-1)
+	sout=strings.Replace(sout,"<oli-end>","</li>\n",-1)
 
 	// Reinsert block codes
 	sout=insertBlocks(sout,codeBlocks,"<pre><code>","</code></pre>","code")
