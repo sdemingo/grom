@@ -67,11 +67,16 @@ var strikeReg = regexp.MustCompile("(?P<prefix>[\\s|[\\W]+)\\+(?P<text>[^\\s][^\
 
 
 // listas
-var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s+(?P<item>[^\\-|\\+]+)")
-var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s+(?P<item>[^\\-|\\+]+)")
+var ulistItemReg = regexp.MustCompile("\\s*[\\+|\\-]\\s+(?P<item>[^\\-|\\+|\\n+]+)")
+var olistItemReg = regexp.MustCompile("\\s*[0-9]+\\.\\s+(?P<item>[^\\-|\\+]+)")
+//var ulistItemReg = regexp.MustCompile("(?m)^\\s*[\\+|\\-]\\s+(?P<item>[^\\-|\\+]+)$")
+//var olistItemReg = regexp.MustCompile("(?m)^\\s*[0-9]+\\.\\s+(?P<item>[^\\-|\\+]+)$")
 
-var ulistReg = regexp.MustCompile("(?P<items>(\\<uli-begin\\>[^\\<]+\\<uli-end\\>)+)")
-var olistReg = regexp.MustCompile("(?P<items>(\\<oli-begin\\>[^\\<]+\\<oli-end\\>)+)")
+
+//var ulistReg = regexp.MustCompile("(?P<items>(\\<uli-begin\\>[^\\<]+\\<uli-end\\>)+)")
+//var olistReg = regexp.MustCompile("(?P<items>(\\<oli-begin\\>[^\\<]+\\<oli-end\\>)+)")
+var ulistReg = regexp.MustCompile("(?P<items>(\\<uli-begin\\>.+\\<uli-end\\>)+)")
+var olistReg = regexp.MustCompile("(?P<items>(\\<oli-begin\\>.+\\<oli-end\\>)+)")
 
 
 
