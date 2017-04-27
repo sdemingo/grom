@@ -37,7 +37,6 @@ var linkReg = regexp.MustCompile("\\[\\[(?P<url>[^\\]]+)\\]\\[(?P<text>[^\\]]+)\
 var imgLinkReg = regexp.MustCompile("\\[\\[file:\\.\\./img/(?P<img>[^\\]]+)\\]\\[file:\\.\\./img/(?P<thumb>[^\\]]+)\\]\\]")
 var imgReg = regexp.MustCompile("\\[\\[\\.\\./img/(?P<src>[^\\]]+)\\]\\]")
 
-//var codeReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n(?P<code>(?s)[^\\#]+)^\\#\\+END_SRC\\n")
 var codeReg = regexp.MustCompile(`(?ms)^\#\+BEGIN_SRC \w*\n(?P<code>.+)^\#\+END_SRC\n`)
 var codeHeaderReg = regexp.MustCompile("(?m)^\\#\\+BEGIN_SRC \\w*\\n")
 var codeFooterReg = regexp.MustCompile("(?m)^\\#\\+END_SRC\\n")
@@ -55,7 +54,8 @@ var allPropsReg = regexp.MustCompile(":PROPERTIES:(?s).+:END:")
 var rawHTML = regexp.MustCompile("\\<A-Za-z[^\\>]+\\>")
 
 //estilos de texto
-var boldReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)\\*(?P<text>[^\\s][^\\*]+)\\*(?P<suffix>[\\s|\\W]*)")
+//var boldReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)\\*(?P<text>[^\\s][^\\*]+)\\*(?P<suffix>[\\s|\\W]*)")
+var boldReg = regexp.MustCompile(`\*(?P<text>[^\*]+)\*`)
 var italicReg = regexp.MustCompile("(?P<prefix>[\\s])/(?P<text>[^\\s][^/]+)/(?P<suffix>[^A-Za-z0-9]*)")
 var ulineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)_(?P<text>[^\\s][^_]+)_(?P<suffix>[\\s|\\W]*)")
 var codeLineReg = regexp.MustCompile("(?P<prefix>[\\s|\\W]+)=(?P<text>[^\\s][^\\=]+)=(?P<suffix>[\\s|\\W]*)")
@@ -109,7 +109,8 @@ func Org2HTML(content []byte, url string) string {
 
 	// font styles
 	out = italicReg.ReplaceAll(out, []byte("$prefix<i>$text</i>$suffix"))
-	out = boldReg.ReplaceAll(out, []byte("$prefix<b>$text</b>$suffix"))
+	//out = boldReg.ReplaceAll(out, []byte("$prefix<b>$text</b>$suffix"))
+	out = boldReg.ReplaceAll(out, []byte("<b>$text</b>"))
 	out = ulineReg.ReplaceAll(out, []byte("$prefix<u>$text</u>$suffix"))
 	out = codeLineReg.ReplaceAll(out, []byte("$prefix<code>$text</code>$suffix"))
 	out = strikeReg.ReplaceAll(out, []byte("$prefix<s>$text</s>$suffix"))
