@@ -1,154 +1,152 @@
 /**
 
-   Grom
+  Grom
 
-   Copyright 2013 Sergio de Mingo
+  Copyright 2013 Sergio de Mingo
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 
 */
 
 package main
 
-
 import (
-	//"fmt"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"math/rand"
 	"os"
-	"text/template"
-	"time"
 	"regexp"
 	"strings"
-)
+	"text/template"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
+)
 
 const (
-	POPULAR_TAGS_TO_SHOW=4
+	POPULAR_TAGS_TO_SHOW = 4
 )
 
-type Tag struct{
-	Name string
-	Posts Articles
+type Tag struct {
+	Name   string
+	Posts  Articles
 	Nposts int
 }
 
-type Tags map[string] Tag
+type Tags map[string]Tag
 
-type TagsSlice [] Tag
+type TagsSlice []Tag
 
-func (t TagsSlice) Len() int { return len(t) }
-func (t TagsSlice) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
-func (t TagsSlice) Less(i, j int) bool {return t[i].Nposts < t[j].Nposts }
+func (t TagsSlice) Len() int           { return len(t) }
+func (t TagsSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t TagsSlice) Less(i, j int) bool { return t[i].Nposts < t[j].Nposts }
 
-
-func (t *Tag) getValidId()(string){
+func (t *Tag) getValidId() string {
 	return normalizeURL(t.Name)
 }
 
-
-func normalizeURL(url string)(string){
-	urlReg:=regexp.MustCompile("[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\-_]+")
+func normalizeURL(url string) string {
+	urlReg := regexp.MustCompile("[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\-_]+")
 	if urlReg.MatchString(url) {
 		return ""
 	}
-	s:=url
-	s=strings.Replace(s,"ñ","n",-1)
-	s=strings.Replace(s,"á","a",-1)
-	s=strings.Replace(s,"é","e",-1)
-	s=strings.Replace(s,"í","i",-1)
-	s=strings.Replace(s,"ó","o",-1)
-	s=strings.Replace(s,"ú","u",-1)
+	s := url
+	s = strings.Replace(s, "ñ", "n", -1)
+	s = strings.Replace(s, "á", "a", -1)
+	s = strings.Replace(s, "é", "e", -1)
+	s = strings.Replace(s, "í", "i", -1)
+	s = strings.Replace(s, "ó", "o", -1)
+	s = strings.Replace(s, "ú", "u", -1)
 	return s
 }
 
-
-func (t Tag)makeTagIndex(blog *Blog)(error){
-	f,err:=os.Create(blog.Dir+"/tags/"+t.getValidId()+".html")
-	if err!=nil{
+func (t Tag) makeTagIndex(blog *Blog) error {
+	f, err := os.Create(blog.Dir + "/tags/" + t.getValidId() + ".html")
+	if err != nil {
 		return err
 	}
 
-	blog.TagSelected=t
+	blog.TagSelected = t
 
-	tmpl:=template.New("main")
-	_,err=tmpl.ParseFiles(blog.ThemeDir+"/main.html",
+	tmpl := template.New("main")
+	_, err = tmpl.ParseFiles(blog.ThemeDir+"/main.html",
 		blog.ThemeDir+"/tag-index.html")
-	if (err!=nil){
+	if err != nil {
 		return err
 	}
 
-	err=tmpl.ExecuteTemplate(f,"main",blog)
-	if (err!=nil){
+	err = tmpl.ExecuteTemplate(f, "main", blog)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-
-func makeAllTagsIndex(blog *Blog)(error){
-	f,err:=os.Create(blog.Dir+"/tags/index.html")
-	if err!=nil{
+func makeAllTagsIndex(blog *Blog) error {
+	f, err := os.Create(blog.Dir + "/tags/index.html")
+	if err != nil {
 		return err
 	}
 
-	tmpl:=template.New("main")
-	_,err=tmpl.ParseFiles(blog.ThemeDir+"/main.html",
+	tmpl := template.New("main")
+	_, err = tmpl.ParseFiles(blog.ThemeDir+"/main.html",
 		blog.ThemeDir+"/all-tags.html")
-	if (err!=nil){
+	if err != nil {
 		return err
 	}
 
-	err=tmpl.ExecuteTemplate(f,"main",blog)
-	if (err!=nil){
+	err = tmpl.ExecuteTemplate(f, "main", blog)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func buildTags(blog *Blog) error {
 
-func buildTags(blog *Blog)(error){
+	blog.BlogTags = make(Tags)
 
-	blog.BlogTags=make(Tags)
-
-	for i:=range blog.Posts{
-		a:=blog.Posts[i]
-		if (a!=nil){
-			names:=strings.Split(blog.Posts[i].Meta["Tags"],",")
-			for t:=0;t<len(names);t++{
+	for i := range blog.Posts {
+		a := blog.Posts[i]
+		if a != nil {
+			names := strings.Split(blog.Posts[i].Meta["Tags"], ",")
+			for t := 0; t < len(names); t++ {
 				var tag Tag
 				var ok bool
-				name:=strings.Trim(names[t]," ")
-				n_name:=normalizeURL(name)
-				if ((name=="") || (n_name=="")){
+				name := strings.Trim(names[t], " ")
+				n_name := normalizeURL(name)
+				if (name == "") || (n_name == "") {
 					continue
 				}
-				if tag,ok=blog.BlogTags[n_name];!ok {
-					tag.Name=name
-					tag.Posts=make([]*Article,0)	
-					tag.Nposts=0
+				if tag, ok = blog.BlogTags[n_name]; !ok {
+					tag.Name = name
+					tag.Posts = make([]*Article, 0)
+					tag.Nposts = 0
 				}
-				tag.Posts=append(tag.Posts,blog.Posts[i])
+				tag.Posts = append(tag.Posts, blog.Posts[i])
 				tag.Nposts++
-				blog.BlogTags[n_name]=tag
-				a.ArticleTags[n_name]=tag
+				blog.BlogTags[n_name] = tag
+				a.ArticleTags[n_name] = tag
 			}
 		}
 	}
 
-	for _,v:=range blog.BlogTags{
-		err:=v.makeTagIndex(blog)
-		if err!=nil{
+	for _, v := range blog.BlogTags {
+		err := v.makeTagIndex(blog)
+		if err != nil {
 			return err
 		}
 	}
@@ -158,11 +156,7 @@ func buildTags(blog *Blog)(error){
 	return nil
 }
 
-
-
-
-
-var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
+var sitemapTemplate = `{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {{$b:=.}}
 {{ range $a:=.Posts}}
@@ -187,9 +181,7 @@ var sitemapTemplate=`{{define "sitemap"}}<?xml version="1.0" encoding="UTF-8"?>
 {{end}}
 `
 
-
-
-var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
+var atomTemplate = `{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 <id>{{.Info.Url}}/atom.xml</id>
 <title>{{.Info.Name}}</title>
@@ -216,7 +208,7 @@ var atomTemplate=`{{define "atom"}}<?xml version="1.0" encoding="utf-8"?>
 {{end}}
 `
 
-var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
+var rssTemplate = `{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 <rss version="2.0">
 <channel>
 <title>{{.Info.Name}}</title>
@@ -237,78 +229,123 @@ var rssTemplate=`{{define "rss"}}<?xml version="1.0" encoding="utf-8" ?>
 {{end}}
 `
 
-
-
-
-func makeSitemap(blog *Blog)(error){
-	f,err:=os.Create(blog.Dir+"sitemap.xml")
-	if err!=nil{
+func makeSitemap(blog *Blog) error {
+	f, err := os.Create(blog.Dir + "sitemap.xml")
+	if err != nil {
 		return err
 	}
 
-	t:=template.New("sitemap")
-	_,err=t.Parse(sitemapTemplate)
-	if (err!=nil){
+	t := template.New("sitemap")
+	_, err = t.Parse(sitemapTemplate)
+	if err != nil {
 		return err
 	}
 
-	err=t.ExecuteTemplate(f,"sitemap",blog)
-	if (err!=nil){
+	err = t.ExecuteTemplate(f, "sitemap", blog)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-
-
-
-func getFeedDate()(string){
-	t:=time.Now()
+func getFeedDate() string {
+	t := time.Now()
 	return t.Format(AtomDateFormat)
 }
 
-
-func makeAtomFeed(blog *Blog)(error){
-	f,err:=os.Create(blog.Dir+"atom.xml")
-	if err!=nil{
+func makeAtomFeed(blog *Blog) error {
+	f, err := os.Create(blog.Dir + "atom.xml")
+	if err != nil {
 		return err
 	}
 
-	t:=template.New("atom")
-	_,err=t.Parse(atomTemplate)
-	if (err!=nil){
+	t := template.New("atom")
+	_, err = t.Parse(atomTemplate)
+	if err != nil {
 		return err
 	}
 
-	err=t.ExecuteTemplate(f,"atom",blog)
-	if (err!=nil){
-		return err
-	}
-
-	return nil
-}
-
-
-func makeRSSFeed(blog *Blog)(error){
-	f,err:=os.Create(blog.Dir+"rss.xml")
-	if err!=nil{
-		return err
-	}
-
-	t:=template.New("rss")
-	_,err=t.Parse(rssTemplate)
-	if (err!=nil){
-		return err
-	}
-
-	err=t.ExecuteTemplate(f,"rss",blog)
-	if (err!=nil){
+	err = t.ExecuteTemplate(f, "atom", blog)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func makeRSSFeed(blog *Blog) error {
+	f, err := os.Create(blog.Dir + "rss.xml")
+	if err != nil {
+		return err
+	}
 
+	t := template.New("rss")
+	_, err = t.Parse(rssTemplate)
+	if err != nil {
+		return err
+	}
 
+	err = t.ExecuteTemplate(f, "rss", blog)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func postsWatcher(dir string, blog *Blog) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
+				log.Println("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("modified file:", event.Name)
+				}
+
+				// avisar al websocket server para que envie la orden
+				// de recarga
+				if blog.DebugServer != nil {
+					blog.DebugServer.Send([]byte("reload"))
+				}
+
+				// case err := <-blog.UpdateWatcher.Errors:
+				// 	log.Println("error:", err)
+			}
+		}
+	}()
+
+	// Add watcher to every post directory
+	dirs, err := ioutil.ReadDir("post/")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, d := range dirs {
+		if d.IsDir() {
+			watcher.Add(dir + "post/" + d.Name())
+			//fmt.Printf("Add update watcher to %s\n", dir+"post/"+d.Name())
+		}
+	}
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	<-done
+}
+
+func getTempDirectory() string {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return fmt.Sprintf("/tmp/grom-%d/", 65821+rand.Intn(228546-6521))
+}
