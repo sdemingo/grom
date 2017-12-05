@@ -236,7 +236,7 @@ func (blog *Blog) AddArticle(title string) error {
 	month := d.Format("01")
 
 	a, _ := NewArticle(title)
-	file := blog.Dir + "post/" + year + "/" + month + "-" + title + ".org"
+	file := blog.Dir + "post/" + year + "/" + month + "-" + title + ".md"
 	err := a.WriteNewFile(file)
 	if err != nil {
 		return err
@@ -247,7 +247,7 @@ func (blog *Blog) AddArticle(title string) error {
 func (blog *Blog) AddStaticPage(title string) error {
 
 	a, _ := NewArticle(title)
-	file := blog.Dir + "static/" + title + ".org"
+	file := blog.Dir + "static/" + title + ".md"
 	err := a.WriteNewFile(file)
 	if err != nil {
 		return err
